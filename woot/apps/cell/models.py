@@ -361,7 +361,8 @@ class CellMask(models.Model):
 	# methods
 	def find_protrusions(self):
 		# 1. find edge pixels
-		# 2. 
+		# 2.
+		pass
 
 	def R(self):
 		return self.r*self.series.rmop
