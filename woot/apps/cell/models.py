@@ -252,7 +252,6 @@ class CellInstance(models.Model):
 			self.AreaShape_Perimeter,
 			self.AreaShape_Solidity
 		)
-
 	def line(self):
 		return '{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}\n'.format(
 			self.experiment.name,
@@ -276,7 +275,6 @@ class CellInstance(models.Model):
 			self.AreaShape_Orientation,
 			self.AreaShape_Solidity
 		)
-
 	def set_from_masks(self, unique):
 		# some decision making can be made here, but what I will do for now is just take the only make it has
 		masks = self.masks.filter(channel__name__contains=unique)
@@ -306,7 +304,6 @@ class CellInstance(models.Model):
 			self.region_instance = mask.region_instance
 			self.confidence = mask.confidence
 			self.save()
-
 	def set_from_markers(self):
 		# some decision making can be made here, but what I will do for now is just take the only make it has
 		marker = self.track_instance.markers.all()[0]
@@ -332,6 +329,7 @@ class CellMask(models.Model):
 	gray_value_id = models.IntegerField(default=0)
 	confidence = models.FloatField(default=0.0)
 	region_condition = models.CharField(max_length=255)
+	average_radius = models.FloatField(default=0.0)
 
 	r = models.IntegerField(default=0)
 	c = models.IntegerField(default=0)
@@ -361,6 +359,10 @@ class CellMask(models.Model):
 	Location_Center_Y = models.FloatField(default=0.0)
 
 	# methods
+	def find_protrusions(self):
+		# 1. find edge pixels
+		# 2. 
+
 	def R(self):
 		return self.r*self.series.rmop
 
@@ -441,7 +443,6 @@ class CellMask(models.Model):
 																																																		self.AreaShape_Orientation,
 																																																		self.AreaShape_Perimeter,
 																																																		self.AreaShape_Solidity)
-
 	def load(self):
 		mask = self.mask.load()
 		mask[mask!=self.gray_value_id] = 0
@@ -460,5 +461,5 @@ class Protrusion(models.Model):
 	track_instance = models.OneToOneField(TrackInstance, related_name='protrusions')
 
 	# properties
-	length_from_centre = models.FloatField(default=0.0)
-	length_from
+	length = models.FloatField(default=0.0)
+	orientation = models.FloatField(default=0.0)

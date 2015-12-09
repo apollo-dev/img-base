@@ -559,21 +559,6 @@ class Path(models.Model):
 	def load(self):
 		return imread(self.url)
 
-class Mod(models.Model):
-	# connections
-	composite = models.ForeignKey(Composite, related_name='mods')
-
-	# properties
-	id_token = models.CharField(max_length=8)
-	algorithm = models.CharField(max_length=255)
-	date_created = models.DateTimeField(auto_now_add=True)
-
-	# methods
-	def run(self, **kwargs):
-		''' Runs associated algorithm to produce a new channel. '''
-		algorithm = getattr(algorithms, self.algorithm)
-		algorithm(self.composite, self.id_token, self.algorithm, **kwargs)
-
 ### MASKS
 class MaskChannel(models.Model):
 	# connections

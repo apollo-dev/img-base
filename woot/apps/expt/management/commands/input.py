@@ -138,31 +138,10 @@ class Command(BaseCommand):
 
 			# 6. make zmod channels
 			if composite.channels.filter(name='-zmod').count()==0:
-				mod = composite.mods.create(id_token=generate_id_token('img', 'Mod'), algorithm='mod_zmod')
-
-				# Run mod
-				print('step01 | processing mod_zmod...', end='\r')
-				mod.run()
-				print('step01 | processing mod_zmod... done.{}'.format(spacer))
+				composite.create_zmod('0', '1', )
 
 			else:
 				print('step01 | zmod already exists...')
-
-			# 7. copy zcomp (for tracking) to ij directory
-			for gon in composite.channels.get(name='-zcomp').gons.all():
-				if not exists(join(composite.experiment.ij_path, series.name)):
-					os.mkdir(join(composite.experiment.ij_path, series.name))
-				sh.copy2(gon.paths.get().url, join(composite.experiment.ij_path, series.name, gon.paths.get().file_name))
-
-			# 8. copy zmean (for checking) to mean directory
-			for gon in composite.channels.get(name='-zmean').gons.all():
-				if not exists(join(composite.experiment.base_path, 'mean', series.name)):
-					os.makedirs(join(composite.experiment.base_path, 'mean', series.name))
-				sh.copy2(gon.paths.get().url, join(composite.experiment.base_path, 'mean', series.name, gon.paths.get().file_name))
-
-			# 9. copy single zbf image from beginning of time series to regions path for tracking
-			region_tracking_gon = composite.channels.get(name='-zbf').gons.get(t=0)
-			sh.copy2(region_tracking_gon.paths.get().url, join(composite.experiment.regions_path, '{}_s{}_region_tracking.tiff'.format(experiment.name, series.name)))
 
 		else:
 			print('Please enter an experiment')
