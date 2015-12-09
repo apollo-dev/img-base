@@ -450,6 +450,15 @@ class CellMask(models.Model):
 
 class Protrusion(models.Model):
 	# connections
-	
+	experiment = models.ForeignKey(Experiment, related_name='protrusions')
+	series = models.ForeignKey(Series, related_name='protrusions')
+	cell = models.ForeignKey(Cell, related_name='protrusions')
+	cell_instance = models.ForeignKey(CellInstance, related_name='protrusions')
+	cell_mask = models.ForeignKey(CellMask, related_name='protrusions')
+	region = models.ForeignKey(Region, related_name='protrusions', null=True)
+	region_instance = models.ForeignKey(RegionInstance, related_name='protrusions', null=True)
+	track_instance = models.OneToOneField(TrackInstance, related_name='protrusions')
 
 	# properties
+	length_from_centre = models.FloatField(default=0.0)
+	length_from
