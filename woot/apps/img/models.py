@@ -6,11 +6,12 @@ from django.db import models
 # local
 from apps.expt.models import Experiment, Series
 from apps.expt.util import generate_id_token, str_value, random_string
-from apps.img.util import cut_to_black, create_bulk_from_image_set, nonzero_mean, edge_image, scan_point
+from apps.img.util import cut_to_black, create_bulk_from_image_set, nonzero_mean, edge_image, scan_point, mask_edge_image
 from apps.expt.data import *
 
 # util
 import os
+from os.path import exists, join
 import re
 import numpy as np
 import scipy
@@ -56,7 +57,7 @@ class Composite(models.Model):
 		metadata = template.dict(file_name)
 
 		if self.series.name == metadata['series']:
-			data_file, data_file_created = self.data_files.get_or_create(experiment=self.experiment, series=self.series, template=template, id_token=metadata['id'], data_type=metadata['type'], url=os.path.join(root, file_name), file_name=file_name)
+			data_file, data_file_created = self.data_files.get_or_create(experiment=self.experiment, series=self.series, template=template, id_token=metadata['id'], data_type=metadata['type'], url=join(root, file_name), file_name=file_name)
 			return data_file, data_file_created, 'created.' if data_file_created else 'already exists.'
 		else:
 			return None, False, 'does not match series.'
@@ -221,16 +222,16 @@ class Composite(models.Model):
 
 		return zedge_channel
 
-	def create_tile(self):
-		tile_path = os.path.join(self.experiment.video_path, 'tile', self.series.name)
-		if not os.path.exists(tile_path):
+	def create_tile(self, channel_unique_override):
+		tile_path = join(self.experiment.video_path, 'tile', self.series.name)
+		if not exists(tile_path):
 			os.makedirs(tile_path)
 
 		for t in range(self.series.ts):
 			zbf_gon = self.gons.get(t=t, channel__name='-zbf')
 			zcomp_gon = self.gons.get(t=t, channel__name='-zcomp')
 			zmean_gon = self.gons.get(t=t, channel__name='-zmean')
-			mask_mask = self.masks.get(t=t, channel__name__contains=kwargs['channel_unique_override'])
+			mask_mask = self.masks.get(t=t, channel__name__contains=channel_unique_override)
 
 			zbf = zbf_gon.load()
 			zcomp = zcomp_gon.load()
@@ -355,11 +356,11 @@ class Channel(models.Model):
 		mask_template = self.composite.templates.get(name='mask')
 		mask_channel = self.composite.mask_channels.create(name=unique_key)
 		region_mask_channel = None
-		if self.composite.mask_channels.all():
+		if self.composite.mask_channels.all() and self.composite.current_region_unique:
 			region_mask_channel = self.composite.mask_channels.get(name__contains=self.composite.current_region_unique)
 
 		for cp_out_file in cp_out_file_list:
-			array = imread(os.path.join(self.composite.experiment.cp_path, cp_out_file))
+			array = imread(join(self.composite.experiment.cp_path, cp_out_file))
 			metadata = cp_template.dict(cp_out_file)
 			mask_channel.get_or_create_mask(array, int(metadata['t']))
 
@@ -397,6 +398,7 @@ class Channel(models.Model):
 
 				# 3. create cell mask
 				gray_value_id = mask[marker.r, marker.c]
+				region_instance = None
 				if region_mask_channel is not None:
 					region_gray_value_id = region_mask[marker.r, marker.c]
 					region_instance = self.composite.series.region_instances.filter(region_track_instance__t=t, mode_gray_value_id=region_gray_value_id)
@@ -413,8 +415,8 @@ class Channel(models.Model):
 					cell_mask = cell_instance.masks.create(experiment=cell.experiment,
 																								 series=cell.series,
 																								 cell=cell,
-																								 region=region_instance.region if region_mask_channel is not None else None,
-																								 region_instance=region_instance if region_mask_channel is not None else None,
+																								 region=region_instance.region if region_instance is not None else None,
+																								 region_instance=region_instance if region_instance is not None else None,
 																								 channel=mask_channel,
 																								 mask=mask_mask,
 																								 marker=marker,
@@ -483,7 +485,7 @@ class Channel(models.Model):
 		mask_channel = self.composite.mask_channels.create(name=unique_key)
 
 		for cp_out_file in cp_out_file_list:
-			array = imread(os.path.join(self.composite.experiment.cp_path, cp_out_file))
+			array = imread(join(self.composite.experiment.cp_path, cp_out_file))
 			metadata = cp_template.dict(cp_out_file)
 			mask_channel.get_or_create_mask(array, int(metadata['t']))
 
@@ -701,11 +703,11 @@ class Gon(models.Model):
 		# 2. for each plane, save plane based on root, template
 		# 3. create path with url and add to gon
 
-		if not os.path.exists(root):
+		if not exists(root):
 			os.makedirs(root)
 
 		file_name = template.rv.format(self.experiment.name, self.series.name, self.channel.name, str_value(self.t, self.series.ts), '{}')
-		url = os.path.join(root, file_name)
+		url = join(root, file_name)
 
 		if len(self.array.shape)==2:
 			imsave(url.format(str_value(self.z, self.series.zs)), self.array)
@@ -888,11 +890,11 @@ class Mask(models.Model):
 		# 2. for each plane, save plane based on root, template
 		# 3. create path with url and add to gon
 
-		if not os.path.exists(root):
+		if not exists(root):
 			os.makedirs(root)
 
 		self.file_name = template.rv.format(self.experiment.name, self.series.name, self.channel.name, str_value(self.t, self.series.ts), str_value(self.z, self.series.zs))
-		self.url = os.path.join(root, self.file_name)
+		self.url = join(root, self.file_name)
 
 		imsave(self.url, self.array)
 

@@ -112,3 +112,10 @@ def scan_point(img, rs, cs, r, c, size=0):
 	column_1D = np.sum(np.sum(column, axis=0), axis=0)
 
 	return column_1D
+
+def mask_edge_image(mask_img):
+	full_edge_img = np.zeros(mask_img.shape)
+	for unique in [u for u in np.unique(mask_img) if u>0]:
+		full_edge_img += edge_image(mask_img==unique)
+
+	return full_edge_img>0
