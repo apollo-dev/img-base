@@ -223,14 +223,14 @@ class Composite(models.Model):
 		return zedge_channel
 
 	def create_tile(self, channel_unique_override):
-		tile_path = join(self.experiment.video_path, 'tile', self.series.name)
+		tile_path = join(self.experiment.video_path, 'tile', self.series.name, channel_unique_override)
 		if not exists(tile_path):
 			os.makedirs(tile_path)
 
 		for t in range(self.series.ts):
 			zbf_gon = self.gons.get(t=t, channel__name='-zbf')
-			zcomp_gon = self.gons.get(t=t, channel__name='-zcomp')
-			zmean_gon = self.gons.get(t=t, channel__name='-zmean')
+			zcomp_gon = self.gons.get(t=t, channel__name='-zdiff')
+			zmean_gon = self.gons.get(t=t, channel__name='-zedge')
 			mask_mask = self.masks.get(t=t, channel__name__contains=channel_unique_override)
 
 			zbf = zbf_gon.load()
@@ -297,20 +297,22 @@ class Composite(models.Model):
 			bottom_half = np.concatenate((np.dstack([zmean, zmean, zmean]), np.dstack([zcomp_mask_r, zcomp_mask_g, zcomp_mask_b])), axis=0)
 			whole = np.concatenate((top_half, bottom_half), axis=1)
 
-			imsave(join(tile_path, 'tile_{}_s{}_t{}.tiff'.format(self.experiment.name, self.series.name, str_value(t, self.series.ts))), whole)
+			imsave(join(tile_path, 'tile_{}_s{}_marker-{}_t{}.tiff'.format(self.experiment.name, self.series.name, channel_unique_override, str_value(t, self.series.ts))), whole)
 
 	def create_zdiff(self):
 
 		zdiff_channel, zdiff_channel_created = self.channels.get_or_create(name='-zdiff')
 
 		for t in range(self.series.ts):
-			zmean = exposure.rescale_intensity(composite.gons.get(channel__name='-zmean', t=t).load() * 1.0)
-			zmod = exposure.rescale_intensity(composite.gons.get(channel__name='-zmod', t=t).load() * 1.0)
+			print('creating zdiff t{}/{}'.format(t+1, self.series.ts), end='\r' if t<self.series.ts-1 else '\n')
+			zmean = exposure.rescale_intensity(self.gons.get(channel__name='-zmean', t=t).load() * 1.0)
+			zmod = exposure.rescale_intensity(self.gons.get(channel__name='-zmod', t=t).load() * 1.0)
 
 			zdiff = np.zeros(zmean.shape)
 			for unique in np.unique(zmod):
-				print(unique, len(np.unique(zmod)))
 				zdiff[zmod==unique] = np.mean(zmean[zmod==unique]) / np.sum(zmean)
+
+			zdiff = gf(zdiff, sigma=3)
 
 			zdiff_gon, zdiff_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=zdiff_channel, t=t)
 			zdiff_gon.set_origin(0,0,0,t)
