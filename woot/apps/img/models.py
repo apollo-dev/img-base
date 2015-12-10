@@ -6,6 +6,7 @@ from django.db import models
 # local
 from apps.expt.models import Experiment, Series
 from apps.expt.util import generate_id_token, str_value, random_string
+from apps.img.util import cut_to_black, create_bulk_from_image_set, nonzero_mean, edge_image, scan_point
 from apps.expt.data import *
 
 # util
@@ -15,9 +16,15 @@ import numpy as np
 import scipy
 from scipy.misc import imread, imsave, toimage
 from scipy.ndimage import label
+from scipy.ndimage.filters import gaussian_filter as gf
+from scipy.ndimage.measurements import center_of_mass as com
 from scipy.stats.mstats import mode
+from scipy.ndimage.morphology import binary_erosion as erode
+from scipy.ndimage.morphology import binary_dilation as dilate
+from scipy.ndimage import distance_transform_edt
+from scipy.ndimage.measurements import label
 from skimage import exposure
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 import matplotlib.pyplot as plt
 
 ### Models
@@ -56,6 +63,240 @@ class Composite(models.Model):
 
 	def shape(self, d=2):
 		return self.series.shape(d)
+
+	def create_zmod(self, R=5, delta_z=-8, sigma=5):
+		# template
+		template = self.templates.get(name='source') # SOURCE TEMPLATE
+
+		# channels
+		zmod_channel, zmod_channel_created = self.channels.get_or_create(name='-zmod')
+		zmean_channel, zmean_channel_created = self.channels.get_or_create(name='-zmean')
+		zbf_channel, zbf_channel_created = self.channels.get_or_create(name='-zbf')
+		zcomp_channel, zcomp_channel_created = self.channels.get_or_create(name='-zcomp')
+
+		# iterate over frames
+		for t in range(self.series.ts):
+			print('step01 | creating zmod, zmean, zbf, zcomp t{}/{}...'.format(t+1, self.series.ts), end='\r')
+
+			# load gfp
+			gfp_gon = self.gons.get(t=t, channel__name='0')
+			gfp = exposure.rescale_intensity(gfp_gon.load() * 1.0)
+			gfp = gf(gfp, sigma=sigma) # <<< SMOOTHING
+
+			# load bf
+			bf_gon = self.gons.get(t=t, channel__name='1')
+			bf = exposure.rescale_intensity(bf_gon.load() * 1.0)
+
+			# initialise images
+			Z = np.zeros(self.series.shape(d=2), dtype=int)
+			Zmean = np.zeros(self.series.shape(d=2))
+			Zbf = np.zeros(self.series.shape(d=2))
+			Zcomp = np.zeros(self.series.shape(d=2))
+
+			# loop over image
+			for r in range(self.series.rs):
+				for c in range(self.series.cs):
+
+					# scan
+					data = scan_point(gfp, self.series.rs, self.series.cs, r, c, size=R)
+					normalised_data = np.array(data) / np.max(data)
+
+					# data
+					z = int(np.argmax(normalised_data))
+					cz = z + delta_z #corrected z
+					mean = 1.0 - np.mean(normalised_data) # 1 - mean
+					bfz = bf[r,c,cz]
+
+					Z[r,c] = cz
+					Zmean[r,c] = mean
+					Zbf[r,c] = bfz
+					Zcomp[r,c] = bfz * mean
+
+			# images to channel gons
+			zmod_gon, zmod_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=zmod_channel, t=t)
+			zmod_gon.set_origin(0,0,0,t)
+			zmod_gon.set_extent(self.series.rs, self.series.cs, 1)
+
+			zmod_gon.array = Z
+			zmod_gon.save_array(self.series.experiment.composite_path, template)
+			zmod_gon.save()
+
+			zmean_gon, zmean_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=zmean_channel, t=t)
+			zmean_gon.set_origin(0,0,0,t)
+			zmean_gon.set_extent(self.series.rs, self.series.cs, 1)
+
+			zmean_gon.array = exposure.rescale_intensity(Zmean * 1.0)
+			zmean_gon.save_array(self.series.experiment.composite_path, template)
+			zmean_gon.save()
+
+			zbf_gon, zbf_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=zbf_channel, t=t)
+			zbf_gon.set_origin(0,0,0,t)
+			zbf_gon.set_extent(self.series.rs, self.series.cs, 1)
+
+			zbf_gon.array = Zbf
+			zbf_gon.save_array(self.series.experiment.composite_path, template)
+			zbf_gon.save()
+
+			zcomp_gon, zcomp_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=zcomp_channel, t=t)
+			zcomp_gon.set_origin(0,0,0,t)
+			zcomp_gon.set_extent(self.series.rs, self.series.cs, 1)
+
+			zcomp_gon.array = Zcomp
+			zcomp_gon.save_array(self.series.experiment.composite_path, template)
+			zcomp_gon.save()
+
+	def create_selinummi(self, R=3):
+		# template
+		template = self.templates.get(name='source') # SOURCE TEMPLATE
+
+		# channels
+		bmod_channel, bmod_channel_created = self.channels.get_or_create(name='-bmod')
+
+		# iterate over frames
+		for t in range(self.series.ts):
+			print('step01 | creating bmod t{}/{}...'.format(t+1, self.series.ts), end='\r')
+
+			# load bf
+			bf_gon = self.gons.get(t=t, channel__name='1')
+			bf = exposure.rescale_intensity(bf_gon.load() * 1.0)
+
+			# initialise images
+			bmod = np.std(bf / np.dstack([np.max(bf, axis=2)] * bf.shape[2]), axis=2)
+
+			# images to channel gons
+			bmod_gon, bmod_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=bmod_channel, t=t)
+			bmod_gon.set_origin(0,0,0,t)
+			bmod_gon.set_extent(self.series.rs, self.series.cs, 1)
+
+			bmod_gon.array = bmod
+			bmod_gon.save_array(self.series.experiment.composite_path, template)
+			bmod_gon.save()
+
+	def create_max_gfp(self):
+		# template
+		template = self.templates.get(name='source') # SOURCE TEMPLATE
+
+		# channels
+		max_gfp_channel, max_gfp_channel_created = self.channels.get_or_create(name='-mgfp')
+
+		# iterate over frames
+		for t in range(self.series.ts):
+			print('step01 | creating max_gfp t{}/{}...'.format(t+1, self.series.ts), end='\r')
+
+			# load gfp
+			gfp_gon = self.gons.get(t=t, channel__name='0')
+			gfp = exposure.rescale_intensity(gfp_gon.load() * 1.0)
+
+			# images to channel gons
+			max_gfp_gon, max_gfp_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=max_gfp_channel, t=t)
+			max_gfp_gon.set_origin(0,0,0,t)
+			max_gfp_gon.set_extent(self.series.rs, self.series.cs, 1)
+
+			max_gfp_gon.array = np.max(gfp, axis=2)
+			max_gfp_gon.save_array(self.series.experiment.composite_path, template)
+			max_gfp_gon.save()
+
+	def create_zedge(self, channel_unique_override):
+		zedge_channel, zedge_channel_created = self.channels.get_or_create(name='-zedge')
+
+		for t in range(self.series.ts):
+			print('step02 | processing mod_zedge t{}/{}...'.format(t+1, self.series.ts), end='\r')
+
+			zdiff_mask = self.masks.get(channel__name__contains=channel_unique_override, t=t).load()
+			zbf = exposure.rescale_intensity(self.gons.get(channel__name='-zbf', t=t).load() * 1.0)
+			zedge = zbf.copy()
+
+			binary_mask = zdiff_mask>0
+			outside_edge = distance_transform_edt(dilate(edge_image(binary_mask), iterations=4))
+			outside_edge = 1.0 - exposure.rescale_intensity(outside_edge * 1.0)
+			zedge *= outside_edge * outside_edge
+
+			zedge_gon, zedge_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=zedge_channel, t=t)
+			zedge_gon.set_origin(0,0,0,t)
+			zedge_gon.set_extent(self.series.rs, self.series.cs, 1)
+
+			zedge_gon.array = zedge.copy()
+			zedge_gon.save_array(self.experiment.composite_path, self.templates.get(name='source'))
+			zedge_gon.save()
+
+		return zedge_channel
+
+	def create_tile(self):
+		tile_path = os.path.join(self.experiment.video_path, 'tile', self.series.name)
+		if not os.path.exists(tile_path):
+			os.makedirs(tile_path)
+
+		for t in range(self.series.ts):
+			zbf_gon = self.gons.get(t=t, channel__name='-zbf')
+			zcomp_gon = self.gons.get(t=t, channel__name='-zcomp')
+			zmean_gon = self.gons.get(t=t, channel__name='-zmean')
+			mask_mask = self.masks.get(t=t, channel__name__contains=kwargs['channel_unique_override'])
+
+			zbf = zbf_gon.load()
+			zcomp = zcomp_gon.load()
+			zmean = zmean_gon.load()
+			mask = mask_mask.load()
+
+			mask_outline = mask_edge_image(mask)
+
+			zbf_mask_r = zbf.copy()
+			zbf_mask_g = zbf.copy()
+			zbf_mask_b = zbf.copy()
+
+			zcomp_mask_r = zcomp.copy()
+			zcomp_mask_g = zcomp.copy()
+			zcomp_mask_b = zcomp.copy()
+
+			# drawing
+			# 1. draw outlines in red channel
+			zbf_mask_r[mask_outline>0] = 255
+			zbf_mask_g[mask_outline>0] = 0
+			zbf_mask_b[mask_outline>0] = 0
+			zcomp_mask_r[mask_outline>0] = 255
+			zcomp_mask_g[mask_outline>0] = 0
+			zcomp_mask_b[mask_outline>0] = 0
+
+			markers = self.markers.filter(track_instance__t=t, track__cell__isnull=False)
+			for marker in markers:
+				if hasattr(marker.track_instance, 'cell_instance'):
+					# 2. draw markers in blue channel
+					zbf_mask_r[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 0
+					zbf_mask_g[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 0
+					zbf_mask_b[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 255
+					zcomp_mask_r[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 0
+					zcomp_mask_g[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 0
+					zcomp_mask_b[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 255
+
+					# 3. draw text in green channel
+					blank_slate = np.zeros(zbf.shape)
+					blank_slate_img = Image.fromarray(blank_slate)
+					draw = ImageDraw.Draw(blank_slate_img)
+					draw.text((marker.c+5, marker.r+5), '{}'.format(marker.track.cell.pk), font=ImageFont.load_default(), fill='rgb(0,0,255)')
+					blank_slate = np.array(blank_slate_img)
+
+					zbf_mask_r[blank_slate>0] = 0
+					zbf_mask_g[blank_slate>0] = 255
+					zbf_mask_b[blank_slate>0] = 0
+					zcomp_mask_r[blank_slate>0] = 0
+					zcomp_mask_g[blank_slate>0] = 255
+					zcomp_mask_b[blank_slate>0] = 0
+
+			blank_slate = np.array(blank_slate_img)
+
+			zbf_mask_r[blank_slate>0] = 0
+			zbf_mask_g[blank_slate>0] = 0
+			zbf_mask_b[blank_slate>0] = 255
+
+			zcomp_mask_r[blank_slate>0] = 0
+			zcomp_mask_g[blank_slate>0] = 0
+			zcomp_mask_b[blank_slate>0] = 255
+
+			# tile zbf, zbf_mask, zcomp, zcomp_mask
+			top_half = np.concatenate((np.dstack([zbf, zbf, zbf]), np.dstack([zbf_mask_r, zbf_mask_g, zbf_mask_b])), axis=0)
+			bottom_half = np.concatenate((np.dstack([zmean, zmean, zmean]), np.dstack([zcomp_mask_r, zcomp_mask_g, zcomp_mask_b])), axis=0)
+			whole = np.concatenate((top_half, bottom_half), axis=1)
+
+			imsave(join(tile_path, 'tile_{}_s{}_t{}.tiff'.format(self.experiment.name, self.series.name, str_value(t, self.series.ts))), whole)
 
 class Template(models.Model):
 	# connections
@@ -113,7 +354,9 @@ class Channel(models.Model):
 		cp_template = self.composite.templates.get(name='cp')
 		mask_template = self.composite.templates.get(name='mask')
 		mask_channel = self.composite.mask_channels.create(name=unique_key)
-		region_mask_channel = self.composite.mask_channels.get(name__contains=self.composite.current_region_unique)
+		region_mask_channel = None
+		if self.composite.mask_channels.all():
+			region_mask_channel = self.composite.mask_channels.get(name__contains=self.composite.current_region_unique)
 
 		for cp_out_file in cp_out_file_list:
 			array = imread(os.path.join(self.composite.experiment.cp_path, cp_out_file))
@@ -136,8 +379,9 @@ class Channel(models.Model):
 			mask = mask_mask.load()
 
 			# load region mask
-			region_mask_mask = region_mask_channel.masks.get(t=t)
-			region_mask = region_mask_mask.load()
+			if region_mask_channel is not None:
+				region_mask_mask = region_mask_channel.masks.get(t=t)
+				region_mask = region_mask_mask.load()
 
 			t_data = list(filter(lambda d: int(d['ImageNumber'])-1==t, data))
 
@@ -153,23 +397,24 @@ class Channel(models.Model):
 
 				# 3. create cell mask
 				gray_value_id = mask[marker.r, marker.c]
-				region_gray_value_id = region_mask[marker.r, marker.c]
-				region_instance = self.composite.series.region_instances.filter(region_track_instance__t=t, mode_gray_value_id=region_gray_value_id)
-				if region_instance:
-					region_instance = region_instance[0]
-				else:
-					region_instance = None
-					for ri in self.composite.series.region_instances.filter(region_track_instance__t=t):
-						gray_value_ids = [ri_mask.gray_value_id for ri_mask in ri.masks.all()]
-						if region_instance is None and region_gray_value_id in gray_value_ids:
-							region_instance = ri
+				if region_mask_channel is not None:
+					region_gray_value_id = region_mask[marker.r, marker.c]
+					region_instance = self.composite.series.region_instances.filter(region_track_instance__t=t, mode_gray_value_id=region_gray_value_id)
+					if region_instance:
+						region_instance = region_instance[0]
+					else:
+						region_instance = None
+						for ri in self.composite.series.region_instances.filter(region_track_instance__t=t):
+							gray_value_ids = [ri_mask.gray_value_id for ri_mask in ri.masks.all()]
+							if region_instance is None and region_gray_value_id in gray_value_ids:
+								region_instance = ri
 
 				if gray_value_id!=0:
 					cell_mask = cell_instance.masks.create(experiment=cell.experiment,
 																								 series=cell.series,
 																								 cell=cell,
-																								 region=region_instance.region if region_instance is not None else None,
-																								 region_instance=region_instance if region_instance is not None else None,
+																								 region=region_instance.region if region_mask_channel is not None else None,
+																								 region_instance=region_instance if region_mask_channel is not None else None,
 																								 channel=mask_channel,
 																								 mask=mask_mask,
 																								 marker=marker,
