@@ -299,6 +299,29 @@ class Composite(models.Model):
 
 			imsave(join(tile_path, 'tile_{}_s{}_t{}.tiff'.format(self.experiment.name, self.series.name, str_value(t, self.series.ts))), whole)
 
+	def create_zdiff(self):
+
+		zdiff_channel, zdiff_channel_created = self.channels.get_or_create(name='-zdiff')
+
+		for t in range(self.series.ts):
+			zmean = exposure.rescale_intensity(composite.gons.get(channel__name='-zmean', t=t).load() * 1.0)
+			zmod = exposure.rescale_intensity(composite.gons.get(channel__name='-zmod', t=t).load() * 1.0)
+
+			zdiff = np.zeros(zmean.shape)
+			for unique in np.unique(zmod):
+				print(unique, len(np.unique(zmod)))
+				zdiff[zmod==unique] = np.mean(zmean[zmod==unique]) / np.sum(zmean)
+
+			zdiff_gon, zdiff_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=zdiff_channel, t=t)
+			zdiff_gon.set_origin(0,0,0,t)
+			zdiff_gon.set_extent(self.series.rs, self.series.cs, 1)
+
+			zdiff_gon.array = zdiff.copy()
+			zdiff_gon.save_array(self.experiment.composite_path, self.templates.get(name='source'))
+			zdiff_gon.save()
+
+		return zdiff_channel
+
 class Template(models.Model):
 	# connections
 	composite = models.ForeignKey(Composite, related_name='templates')

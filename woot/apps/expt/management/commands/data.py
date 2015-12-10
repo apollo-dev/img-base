@@ -88,13 +88,13 @@ class Command(BaseCommand):
 					print('step02 | processing marker ({}/{})... {} tracks, {} instances, {} markers'.format(i+1,len(data),composite.tracks.count(), composite.track_instances.count(), composite.markers.count()), end='\n' if i==len(data)-1 else '\r')
 
 			# 3. Generate zDiff channel
-			zmean_channel = composite.channels.get(name='-zmean')
+			zdiff_channel = composite.create_zdiff()
 
 			# 4. Segment zdiff channel
-			zmean_unique = zmean_channel.segment(marker_channel_name='-zcomp')
+			zdiff_unique = zdiff_channel.segment(marker_channel_name='-zcomp')
 
 			# 5. Generate zEdge channel
-			zedge_channel = composite.create_zedge(channel_unique_override=zmean_unique)
+			zedge_channel = composite.create_zedge(channel_unique_override=zdiff_unique)
 
 			# 6. Segment zEdge channel
 			zedge_unique = zedge_channel.segment(marker_channel_name='-zcomp', threshold_correction_factor=1.2)
