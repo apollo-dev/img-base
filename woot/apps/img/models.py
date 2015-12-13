@@ -86,9 +86,8 @@ class Composite(models.Model):
 			gfp = gf(gfp, sigma=sigma) # <<< SMOOTHING
 
 			# load bf
-			bf_gon = self.gons.get(t=t, channel__name='0')
+			bf_gon = self.gons.get(t=t, channel__name='1')
 			bf = exposure.rescale_intensity(bf_gon.load() * 1.0)
-			bf = gf(bf, sigma=sigma) # <<< SMOOTHING
 
 			# initialise images
 			Z = np.zeros(self.series.shape(d=2), dtype=int)
@@ -169,6 +168,7 @@ class Composite(models.Model):
 			# load gfp
 			gfp_gon = self.gons.get(t=t, channel__name='0')
 			gfp = exposure.rescale_intensity(gfp_gon.load() * 1.0)
+			gfp = gf(gfp, sigma=2) # <<< SMOOTHING
 
 			# images to channel gons
 			max_gfp_gon, max_gfp_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=max_gfp_channel, t=t)
@@ -186,7 +186,7 @@ class Composite(models.Model):
 			print('step02 | processing mod_zedge t{}/{}...'.format(t+1, self.series.ts), end='\r')
 
 			zdiff_mask = self.masks.get(channel__name__contains=channel_unique_override, t=t).load()
-			zbf = exposure.rescale_intensity(self.gons.get(channel__name='-zbf', t=t).load() * 1.0)
+			zbf = exposure.rescale_intensity(self.gons.get(channel__name='-mgfp', t=t).load() * 1.0)
 			zedge = zbf.copy()
 
 			binary_mask = zdiff_mask>0
