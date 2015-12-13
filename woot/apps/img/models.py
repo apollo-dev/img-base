@@ -18,6 +18,7 @@ import scipy
 from scipy.misc import imread, imsave, toimage
 from scipy.ndimage import label
 from scipy.ndimage.filters import gaussian_filter as gf
+from scipy.ndimage.filters import convolve
 from scipy.ndimage.measurements import center_of_mass as com
 from scipy.stats.mstats import mode
 from scipy.ndimage.morphology import binary_erosion as erode
@@ -262,16 +263,6 @@ class Composite(models.Model):
 					zcomp_mask_r[blank_slate>0] = 0
 					zcomp_mask_g[blank_slate>0] = 255
 					zcomp_mask_b[blank_slate>0] = 0
-
-			blank_slate = np.array(blank_slate_img)
-
-			zbf_mask_r[blank_slate>0] = 0
-			zbf_mask_g[blank_slate>0] = 0
-			zbf_mask_b[blank_slate>0] = 255
-
-			zcomp_mask_r[blank_slate>0] = 0
-			zcomp_mask_g[blank_slate>0] = 0
-			zcomp_mask_b[blank_slate>0] = 255
 
 			# tile zbf, zbf_mask, zcomp, zcomp_mask
 			top_half = np.concatenate((np.dstack([zbf, zbf, zbf]), np.dstack([zbf_mask_r, zbf_mask_g, zbf_mask_b])), axis=0)

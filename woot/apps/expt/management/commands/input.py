@@ -145,7 +145,7 @@ class Command(BaseCommand):
 
 			# 7. make bmod channels
 			if composite.channels.filter(name='-bmod').count()==0:
-				composite.create_seminummi()
+				composite.create_selinummi()
 
 			else:
 				print('step01 | zmod already exists...')
