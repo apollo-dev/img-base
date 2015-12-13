@@ -85,33 +85,22 @@ class Composite(models.Model):
 			gfp = gf(gfp, sigma=sigma) # <<< SMOOTHING
 
 			# load bf
-			bf_gon = self.gons.get(t=t, channel__name='1')
+			bf_gon = self.gons.get(t=t, channel__name='0')
 			bf = exposure.rescale_intensity(bf_gon.load() * 1.0)
+			bf = gf(bf, sigma=sigma) # <<< SMOOTHING
 
 			# initialise images
 			Z = np.zeros(self.series.shape(d=2), dtype=int)
 			Zmean = np.zeros(self.series.shape(d=2))
 			Zbf = np.zeros(self.series.shape(d=2))
-			Zcomp = np.zeros(self.series.shape(d=2))
 
 			# loop over image
-			for r in range(self.series.rs):
-				for c in range(self.series.cs):
+			Z = np.argmax(gfp, axis=2) + delta_z
+			for level in range(bf.shape[2]):
+				bf[:,:,level] = convolve(bf[:,:,level], np.ones((R,R)))
+				Zbf[Z==level] = bf[Z==level,level]
 
-					# scan
-					data = scan_point(gfp, self.series.rs, self.series.cs, r, c, size=R)
-					normalised_data = np.array(data) / np.max(data)
-
-					# data
-					z = int(np.argmax(normalised_data))
-					cz = z + delta_z #corrected z
-					mean = 1.0 - np.mean(normalised_data) # 1 - mean
-					bfz = bf[r,c,cz]
-
-					Z[r,c] = cz
-					Zmean[r,c] = mean
-					Zbf[r,c] = bfz
-					Zcomp[r,c] = bfz * mean
+			Zmean = 1 - np.mean(gfp, axis=2) / np.max(gfp, axis=2)
 
 			# images to channel gons
 			zmod_gon, zmod_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=zmod_channel, t=t)
@@ -137,14 +126,6 @@ class Composite(models.Model):
 			zbf_gon.array = Zbf
 			zbf_gon.save_array(self.series.experiment.composite_path, template)
 			zbf_gon.save()
-
-			zcomp_gon, zcomp_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=zcomp_channel, t=t)
-			zcomp_gon.set_origin(0,0,0,t)
-			zcomp_gon.set_extent(self.series.rs, self.series.cs, 1)
-
-			zcomp_gon.array = Zcomp
-			zcomp_gon.save_array(self.series.experiment.composite_path, template)
-			zcomp_gon.save()
 
 	def create_selinummi(self, R=3):
 		# template
