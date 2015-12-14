@@ -139,7 +139,7 @@ class Command(BaseCommand):
 			# 6. make zmod channels
 			if composite.channels.filter(name='-zmod').count()==0:
 				composite.create_zmod()
-				composite.create_zdiff()
+				composite.create_zunique()
 			else:
 				print('step01 | zmod already exists...')
 
