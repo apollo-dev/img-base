@@ -72,10 +72,10 @@ class Command(BaseCommand):
 				print(unique, len(np.unique(zmod)))
 				zdiff[zmod==unique] = np.mean(zmean[zmod==unique]) / np.sum(zmean)
 
-			# plt.imshow(zdiff, cmap='Greys_r')
-			# plt.show()
+			plt.imshow(zdiff, cmap='Greys_r')
+			plt.show()
 
-			imsave('zdiff.tiff', zdiff)
+			# imsave('zdiff.tiff', zdiff)
 
 		else:
 			print('Please enter an experiment')
