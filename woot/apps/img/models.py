@@ -96,6 +96,12 @@ class Composite(models.Model):
 
 			# loop over image
 			Z = np.argmax(gfp, axis=2) + delta_z
+
+			# outliers
+			Z[Z<0] = 0
+			Z[Z>composite.series.zs-1] = composite.series.zs-1
+
+			# loop over levels
 			for level in range(bf.shape[2]):
 				bf[:,:,level] = convolve(bf[:,:,level], np.ones((R,R)))
 				Zbf[Z==level] = bf[Z==level,level]
