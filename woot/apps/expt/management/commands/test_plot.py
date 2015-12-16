@@ -55,7 +55,7 @@ class Command(BaseCommand):
 			composite = series.composites.get()
 
 			# somehow generate five number series to plot for each cell
-			cell_index = '4' # 4 8 9 10 11 20
+			cell_index = '20' # 4 8 9 10 11 20
 			cell = series.cells.get(pk=cell_index)
 			time_series = {}
 			frames = sorted([int(frame) for frame in cells[cell_index]])
@@ -68,13 +68,9 @@ class Command(BaseCommand):
 				else:
 					time_series['manual'] = [area]
 
-				# if cell.instances.filter(t=frame):
-				print(frame)
-				print([i.t for i in cell.instances.all()])
 				cell_instance = cell.instances.get(t=frame)
 
 				for channel in ['-zcomp-zmean-BE4XTNBJ', '-zcomp-zedge-8FBKJ3S8', '-zcomp-mgfp-M5M2PL1S', '-zcomp-bmod-VVP4L60K']:
-					print([cm.A() for cm in cell_instance.masks.all()])
 					mask = cell_instance.masks.get(channel__name=channel)
 
 					if channel in time_series:
@@ -82,10 +78,14 @@ class Command(BaseCommand):
 					else:
 						time_series[channel] = [mask.A()]
 
-			for channel in time_series:
-				plt.plot(frames, time_series[channel], label=channel)
+			channels = sorted([channel for channel in time_series])
+			for channel in channels:
+				plt.plot(frames, time_series[channel], label=channel[7:-9] if channel!='manual' else channel)
 
-			plt.legend()
+
+			plt.legend(loc=2,prop={'size':10})
+			plt.ylabel('Area ($\mu m^2$)')
+			plt.xlabel('Frame')
 			plt.show()
 
 		else:
