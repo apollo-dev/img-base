@@ -102,15 +102,15 @@ class Command(BaseCommand):
 			Z[Z<0] = 0
 			Z[Z>composite.series.zs-1] = composite.series.zs-1
 
-			# for level in range(bf.shape[2]):
-			# 	print('level {}...'.format(level))
-			# 	bf[:,:,level] = convolve(bf[:,:,level], np.ones((R,R)))
-			# 	Zbf[Z==level] = bf[Z==level,level]
-			#
-			# Zmean = 1 - np.mean(gfp, axis=2) / np.max(gfp, axis=2)
-			#
-			# plt.imshow(Zbf, cmap='Greys_r')
-			# plt.show()
+			for level in range(bf.shape[2]):
+				print('level {}...'.format(level))
+				bf[:,:,level] = convolve(bf[:,:,level], np.ones((R,R)))
+				Zbf[Z==level] = bf[Z==level,level]
+
+			Zmean = 1 - np.mean(gfp, axis=2) / np.max(gfp, axis=2)
+
+			plt.imshow(Zbf, cmap='Greys_r')
+			plt.show()
 
 			# imsave('zbf_sigma_too_high.tiff', Zbf)
 

@@ -191,13 +191,8 @@ class Composite(models.Model):
 		for t in range(self.series.ts):
 			print('step02 | processing mod_zedge t{}/{}...'.format(t+1, self.series.ts), end='\r')
 
-<<<<<<< HEAD
 			zunique_mask = self.masks.get(channel__name__contains=channel_unique_override, t=t).load()
 			zbf = exposure.rescale_intensity(self.gons.get(channel__name='-zbf', t=t).load() * 1.0)
-=======
-			zdiff_mask = self.masks.get(channel__name__contains=channel_unique_override, t=t).load()
-			zbf = exposure.rescale_intensity(self.gons.get(channel__name='-mgfp', t=t).load() * 1.0)
->>>>>>> gfp-only
 			zedge = zbf.copy()
 
 			binary_mask = zunique_mask>0
