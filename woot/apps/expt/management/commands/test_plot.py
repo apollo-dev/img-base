@@ -15,6 +15,7 @@ from os.path import join, exists
 from optparse import make_option
 from subprocess import call
 import shutil as sh
+import matplotlib.pyplot as plt
 
 spacer = ' ' *	20
 
@@ -50,8 +51,42 @@ class Command(BaseCommand):
 		# 1. create experiment and series
 		if experiment_name!='' and series_name!='':
 			experiment = Experiment.objects.get(name=experiment_name)
+			series = experiment.series.get(name=series_name)
+			composite = series.composites.get()
 
-			
+			# somehow generate five number series to plot for each cell
+			cell_index = '4' # 4 8 9 10 11 20
+			cell = series.cells.get(pk=cell_index)
+			time_series = {}
+			frames = sorted([int(frame) for frame in cells[cell_index]])
+			for frame in frames:
+
+				area = cells[cell_index][str(frame)]
+
+				if 'manual' in time_series:
+					time_series['manual'].append(area)
+				else:
+					time_series['manual'] = [area]
+
+				# if cell.instances.filter(t=frame):
+				print(frame)
+				print([i.t for i in cell.instances.all()])
+				cell_instance = cell.instances.get(t=frame)
+
+				for channel in ['-zcomp-zmean-BE4XTNBJ', '-zcomp-zedge-8FBKJ3S8', '-zcomp-mgfp-M5M2PL1S', '-zcomp-bmod-VVP4L60K']:
+					print([cm.A() for cm in cell_instance.masks.all()])
+					mask = cell_instance.masks.get(channel__name=channel)
+
+					if channel in time_series:
+						time_series[channel].append(mask.A())
+					else:
+						time_series[channel] = [mask.A()]
+
+			for channel in time_series:
+				plt.plot(frames, time_series[channel], label=channel)
+
+			plt.legend()
+			plt.show()
 
 		else:
 			print('Please enter an experiment')
