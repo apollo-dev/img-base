@@ -18,6 +18,7 @@ import scipy
 from scipy.misc import imread, imsave, toimage
 from scipy.ndimage import label
 from scipy.ndimage.filters import gaussian_filter as gf
+from scipy.ndimage.filters import convolve
 from scipy.ndimage.measurements import center_of_mass as com
 from scipy.stats.mstats import mode
 from scipy.ndimage.morphology import binary_erosion as erode
@@ -92,26 +93,14 @@ class Composite(models.Model):
 			Z = np.zeros(self.series.shape(d=2), dtype=int)
 			Zmean = np.zeros(self.series.shape(d=2))
 			Zbf = np.zeros(self.series.shape(d=2))
-			Zcomp = np.zeros(self.series.shape(d=2))
 
 			# loop over image
-			for r in range(self.series.rs):
-				for c in range(self.series.cs):
+			Z = np.argmax(gfp, axis=2) + delta_z
+			for level in range(bf.shape[2]):
+				bf[:,:,level] = convolve(bf[:,:,level], np.ones((R,R)))
+				Zbf[Z==level] = bf[Z==level,level]
 
-					# scan
-					data = scan_point(gfp, self.series.rs, self.series.cs, r, c, size=R)
-					normalised_data = np.array(data) / np.max(data)
-
-					# data
-					z = int(np.argmax(normalised_data))
-					cz = z + delta_z #corrected z
-					mean = 1.0 - np.mean(normalised_data) # 1 - mean
-					bfz = bf[r,c,cz]
-
-					Z[r,c] = cz
-					Zmean[r,c] = mean
-					Zbf[r,c] = bfz
-					Zcomp[r,c] = bfz * mean
+			Zmean = 1 - np.mean(gfp, axis=2) / np.max(gfp, axis=2)
 
 			# images to channel gons
 			zmod_gon, zmod_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=zmod_channel, t=t)
@@ -137,14 +126,6 @@ class Composite(models.Model):
 			zbf_gon.array = Zbf
 			zbf_gon.save_array(self.series.experiment.composite_path, template)
 			zbf_gon.save()
-
-			zcomp_gon, zcomp_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=zcomp_channel, t=t)
-			zcomp_gon.set_origin(0,0,0,t)
-			zcomp_gon.set_extent(self.series.rs, self.series.cs, 1)
-
-			zcomp_gon.array = Zcomp
-			zcomp_gon.save_array(self.series.experiment.composite_path, template)
-			zcomp_gon.save()
 
 	def create_selinummi(self, R=3):
 		# template
@@ -187,6 +168,7 @@ class Composite(models.Model):
 			# load gfp
 			gfp_gon = self.gons.get(t=t, channel__name='0')
 			gfp = exposure.rescale_intensity(gfp_gon.load() * 1.0)
+			gfp = gf(gfp, sigma=2) # <<< SMOOTHING
 
 			# images to channel gons
 			max_gfp_gon, max_gfp_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=max_gfp_channel, t=t)
@@ -203,8 +185,13 @@ class Composite(models.Model):
 		for t in range(self.series.ts):
 			print('step02 | processing mod_zedge t{}/{}...'.format(t+1, self.series.ts), end='\r')
 
+<<<<<<< HEAD
 			zunique_mask = self.masks.get(channel__name__contains=channel_unique_override, t=t).load()
 			zbf = exposure.rescale_intensity(self.gons.get(channel__name='-zbf', t=t).load() * 1.0)
+=======
+			zdiff_mask = self.masks.get(channel__name__contains=channel_unique_override, t=t).load()
+			zbf = exposure.rescale_intensity(self.gons.get(channel__name='-mgfp', t=t).load() * 1.0)
+>>>>>>> gfp-only
 			zedge = zbf.copy()
 
 			binary_mask = zunique_mask>0
@@ -281,16 +268,6 @@ class Composite(models.Model):
 					zcomp_mask_r[blank_slate>0] = 0
 					zcomp_mask_g[blank_slate>0] = 255
 					zcomp_mask_b[blank_slate>0] = 0
-
-			blank_slate = np.array(blank_slate_img)
-
-			zbf_mask_r[blank_slate>0] = 0
-			zbf_mask_g[blank_slate>0] = 0
-			zbf_mask_b[blank_slate>0] = 255
-
-			zcomp_mask_r[blank_slate>0] = 0
-			zcomp_mask_g[blank_slate>0] = 0
-			zcomp_mask_b[blank_slate>0] = 255
 
 			# tile zbf, zbf_mask, zcomp, zcomp_mask
 			top_half = np.concatenate((np.dstack([zbf, zbf, zbf]), np.dstack([zbf_mask_r, zbf_mask_g, zbf_mask_b])), axis=0)

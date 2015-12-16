@@ -75,7 +75,7 @@ class Command(BaseCommand):
 																																								 series=composite.series,
 																																								 composite=composite,
 																																								 channel=composite.channels.get(name=marker_prototype['channel']),
-																																								 t=int(marker_prototype['t']))
+																																								 t=int(marker_prototype['t'])-1)
 
 					marker, marker_created = track_instance.markers.get_or_create(experiment=composite.experiment,
 																																				series=composite.series,
