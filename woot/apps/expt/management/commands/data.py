@@ -88,6 +88,7 @@ class Command(BaseCommand):
 					print('step02 | processing marker ({}/{})... {} tracks, {} instances, {} markers'.format(i+1,len(data),composite.tracks.count(), composite.track_instances.count(), composite.markers.count()), end='\n' if i==len(data)-1 else '\r')
 
 			# 3. Generate zDiff channel
+			composite.create_zunique()
 			zunique_channel = composite.channels.get(name='-zunique')
 
 			# 4. Segment zdiff channel
@@ -104,6 +105,13 @@ class Command(BaseCommand):
 			composite.save()
 
 			composite.create_tile(channel_unique_override=zedge_unique)
+
+			# segment other channels
+			selinummi_channel = composite.channels.get(name__contains='bmod')
+			selinummi_channel.segment()
+
+			mgfp_channel = composite.channels.get(name__contains='mgfp')
+			mgfp_channel.segment()
 
 		else:
 			print('Please enter an experiment')
