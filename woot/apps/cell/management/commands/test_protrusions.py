@@ -57,7 +57,7 @@ class Command(BaseCommand):
 			# 1. for each cell mask, load mask image
 			outlines = {}
 			colours = ['red','green','blue','purple']
-			for i, cell_mask in enumerate(cell_instance.masks.filter(channel__name__contains='zedge')):
+			for i, cell_mask in enumerate(cell_instance.masks.exclude(channel__name__contains='zmean')):
 				mask_img = cell_mask.load()
 
 				# get edge

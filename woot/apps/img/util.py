@@ -297,7 +297,6 @@ def roll_edge(ref, points_rc):
 
 	class Ball():
 		tolerance = 0.1
-		last_angle = -delta_theta
 
 		def __init__(self, radius, centre, anchor):
 			self.radius = radius
@@ -321,24 +320,23 @@ def roll_edge(ref, points_rc):
 					del diameter_list[i]
 
 			# filter diameter_list
-			# if list(filter(lambda p: np.linalg.norm(p-self.centre) <= self.radius-self.tolerance, diameter_list)):
-			# 	# need to move back
-			# 	self.rotate(-0.01 * delta_theta)
-			# 	return False
-			if list(filter(lambda p: self.radius-self.tolerance < np.linalg.norm(p-self.centre) <= self.radius+self.tolerance, diameter_list)):
-				print('new anchor')
-				# select new anchor
-				new_anchor = max(filter(lambda p: self.radius-self.tolerance < np.linalg.norm(p-self.centre) <= self.radius+self.tolerance, diameter_list), key=lambda p: np.linalg.norm(p-self.centre))
+			less_than_radius = list(filter(lambda p: np.linalg.norm(p-self.centre) <= self.radius-self.tolerance, diameter_list))
+			if less_than_radius:
+				# need to move back
+				self.rotate(-0.1 * delta_theta)
+				return False
 
-				self.anchor = new_anchor
-				anchor_list.append(self.anchor)
+			else:
+				within_tolerance = list(filter(lambda p: self.radius-self.tolerance < np.linalg.norm(p-self.centre) <= self.radius+self.tolerance, diameter_list))
+				if within_tolerance:
+					# get greatest radius that lies within the tolerance
+					new_anchor = max(within_tolerance, key=lambda p: np.linalg.norm(p-self.centre))
+					self.previous_anchor = self.anchor
+					self.anchor = new_anchor
+					anchor_list.append(self.anchor)
+
 				self.rotate(delta_theta)
 				return True
-			else:
-				print('move forward')
-				# rotate by delta_theta
-				self.rotate(delta_theta)
-				return False
 
 	ball = Ball(ball_radius, ball_centre, anchor)
 
