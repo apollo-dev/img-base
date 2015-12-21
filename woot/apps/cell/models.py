@@ -320,7 +320,7 @@ class CellMask(models.Model):
 		points_rc = [list(lm) for lm in list(zip(points_r, points_c))]
 
 		# sort points using a fixed radius
-		sorted_points = roll_edge_v1(points)
+		sorted_points = roll_edge_v1(points_rc)
 
 		# get cell centre and calculate distances of edge points from this point
 		cell_centre = np.array([self.r, self.c])
@@ -348,7 +348,7 @@ class CellMask(models.Model):
 			# parameters
 			r = relative_end_point[0]
 			c = relative_end_point[1]
-			length_from_centre = np.linalg.norm(relative_end_point * series.scaling()) # in microns
+			length_from_centre = np.linalg.norm(relative_end_point * self.series.scaling()) # in microns
 			length_from_mean = length_from_centre - np.mean(distances)
 			orientation_from_horizontal = math.atan2(relative_end_point[0], relative_end_point[1])
 
@@ -358,7 +358,6 @@ class CellMask(models.Model):
 																																			cell_instance=self.cell_instance,
 																																			region=self.region,
 																																			region_instance=self.region_instance,
-																																			track_instance=self.track_instance,
 																																			r=r,
 																																			c=c)
 			if protrusion_created:
@@ -376,7 +375,6 @@ class Protrusion(models.Model):
 	cell_mask = models.ForeignKey(CellMask, related_name='protrusions')
 	region = models.ForeignKey(Region, related_name='protrusions', null=True)
 	region_instance = models.ForeignKey(RegionInstance, related_name='protrusions', null=True)
-	track_instance = models.OneToOneField(TrackInstance, related_name='protrusions')
 
 	# properties
 	r = models.IntegerField(default=0)

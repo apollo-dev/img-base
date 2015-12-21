@@ -36,6 +36,12 @@ class Command(BaseCommand):
 			help='Name of the series' # who cares
 		),
 
+		make_option('--gfp', # option that will appear in cmd
+			action='store_true', # no idea
+			dest='use_gfp', # refer to this in options variable
+			default=False, # some default
+		),
+
 	)
 
 	args = ''
@@ -104,7 +110,7 @@ class Command(BaseCommand):
 			composite.current_zedge_unique = zedge_unique
 			composite.save()
 
-			composite.create_tile(channel_unique_override=zedge_unique)
+			# composite.create_tile(channel_unique_override=zedge_unique)
 
 			# segment other channels
 			selinummi_channel = composite.channels.get(name__contains='bmod')
@@ -112,6 +118,13 @@ class Command(BaseCommand):
 
 			mgfp_channel = composite.channels.get(name__contains='mgfp')
 			mgfp_channel.segment()
+
+			if options['use_gfp']:
+				# export data using the gfp channels only
+				pass
+			else:
+				# export using brightfield channels
+				pass
 
 		else:
 			print('Please enter an experiment')
