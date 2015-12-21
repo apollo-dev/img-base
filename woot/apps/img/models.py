@@ -447,7 +447,7 @@ class Channel(models.Model):
 					cell_mask.AreaShape_Solidity = float(cell_mask_data['AreaShape_Solidity']) if str(cell_mask_data['AreaShape_Solidity']) != 'nan' else -1.0
 					cell_mask.Location_Center_X = float(cell_mask_data['Location_Center_X']) if str(cell_mask_data['Location_Center_X']) != 'nan' else 0
 					cell_mask.Location_Center_Y = float(cell_mask_data['Location_Center_Y']) if str(cell_mask_data['Location_Center_Y']) != 'nan' else 0
-					cell_mask.find_protrusions()
+					# cell_mask.find_protrusions()
 					cell_mask.save()
 
 		# 6. calculate cell velocities
