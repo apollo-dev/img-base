@@ -445,15 +445,10 @@ class Channel(models.Model):
 					cell_mask.AreaShape_Orientation = float(cell_mask_data['AreaShape_Orientation']) if str(cell_mask_data['AreaShape_Orientation']) != 'nan' else -1.0
 					cell_mask.AreaShape_Perimeter = float(cell_mask_data['AreaShape_Perimeter']) if str(cell_mask_data['AreaShape_Perimeter']) != 'nan' else -1.0
 					cell_mask.AreaShape_Solidity = float(cell_mask_data['AreaShape_Solidity']) if str(cell_mask_data['AreaShape_Solidity']) != 'nan' else -1.0
-
+					cell_mask.Location_Center_X = float(cell_mask_data['Location_Center_X']) if str(cell_mask_data['Location_Center_X']) != 'nan' else 0
+					cell_mask.Location_Center_Y = float(cell_mask_data['Location_Center_Y']) if str(cell_mask_data['Location_Center_Y']) != 'nan' else 0
+					cell_mask.find_protrusions()
 					cell_mask.save()
-
-					# for now
-					cell_instance.set_from_masks(unique)
-
-				else:
-					# for now
-					cell_instance.set_from_markers()
 
 		# 6. calculate cell velocities
 		print('calculating velocities...')

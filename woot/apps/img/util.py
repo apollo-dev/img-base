@@ -278,65 +278,67 @@ def edge_fall(ref, points_rc):
 
 	return [test.rc() for test in test_points]
 
-def roll_edge(ref, points_rc):
+def roll_edge_v1(points_rc, ball_radius=3):
 
 	# 1. get outer point
-	points_rc = [np.array(point) for point in points_rc]
 	max_rc = max(points_rc, key=lambda p: np.linalg.norm(p))
 	max_r = np.linalg.norm(max_rc)
+	anchor = np.array(max_rc)
 
 	# 2. define ball
 	# - ball has a constant radius
 	# - ball pivots about last confirmed point until another point is encountered. If no point is found, end the track.
 	# - keep a log of points encountered in order
-	delta_theta = 0.1 # default amount by which to rotate the ball in radians
-	ball_radius = 3
-	anchor = max_rc.astype(float)
-	ball_centre = anchor + ball_radius * anchor / np.linalg.norm(anchor) # initially R from centre to max_rc + ball_radius
-	anchor_list = [anchor]
+	ball_centre = list(np.array(max_rc) + (ball_radius * np.array(max_rc) / np.linalg.norm(max_rc)).astype(int)) # initially R from centre to max_rc + ball_radius
+	anchor_list = [max_rc]
 
 	class Ball():
-		tolerance = 0.1
 
 		def __init__(self, radius, centre, anchor):
-			self.radius = radius
-			self.centre = centre
-			self.anchor = anchor
-			self.previous_anchor = anchor
+			self.radius = radius # only given as an integer.
+			self.centre = centre # integer np array
+			self.anchor = anchor # integer np array
 
-		def rotate(self, angle):
-			radial = np.matrix(self.centre - self.anchor)
-			R = np.matrix([
-				[math.cos(angle), -math.sin(angle)],
-				[math.sin(angle), math.cos(angle)]
-			])
-			new_radial = radial * R
-			self.centre = self.anchor + np.array(new_radial)
+		def rotate(self):
+			# get radius list relative to anchor
+			anchor_radius_list = self.radius_list()
+			relative_centre = self.anchor - self.centre
+			radius_list_index = anchor_radius_list.index(relative_centre.tolist())
+			radius_list_index = radius_list_index if radius_list_index < len(anchor_radius_list)-1 else 0 # full rotation
+			new_centre = anchor_radius_list[radius_list_index+1]
+			self.centre = np.array(new_centre) + self.anchor
 
-		def checkmove(self, diameter_list):
-			# remove self.anchor from diameter_list
-			for i, point in enumerate(diameter_list):
-				if np.array_equal(point, self.anchor) or np.array_equal(point, self.previous_anchor):
-					del diameter_list[i]
+		def search(self):
+			# get radius list relative to centre
+			centre_radius_list = self.radius_list()
+			points_around_centre = [(np.array(lm)+self.centre).tolist() for lm in centre_radius_list]
 
-			# filter diameter_list
-			less_than_radius = list(filter(lambda p: np.linalg.norm(p-self.centre) <= self.radius-self.tolerance, diameter_list))
-			if less_than_radius:
-				# need to move back
-				self.rotate(-0.1 * delta_theta)
-				return False
+			# The difference here is that we need to go the opposite direction from the centre rotation.
+			# To do this, we need to find the centre point in the array and take everything until that point, but reversed.
+			# This is in the manner of a ships compass in measuring distances on a map.
+			index_of_anchor = points_around_centre.index(self.anchor.tolist())
+			points_to_search = list(reversed(points_around_centre[:index_of_anchor])) + list(reversed(points_around_centre[index_of_anchor+1:]))
 
-			else:
-				within_tolerance = list(filter(lambda p: self.radius-self.tolerance < np.linalg.norm(p-self.centre) <= self.radius+self.tolerance, diameter_list))
-				if within_tolerance:
-					# get greatest radius that lies within the tolerance
-					new_anchor = max(within_tolerance, key=lambda p: np.linalg.norm(p-self.centre))
-					self.previous_anchor = self.anchor
-					self.anchor = new_anchor
-					anchor_list.append(self.anchor)
+			new_anchor = None
+			for p in points_to_search:
+				if new_anchor is None and p in points_rc and not p in anchor_list[-10:]:
+					new_anchor = p
 
-				self.rotate(delta_theta)
-				return True
+			if new_anchor is not None:
+				self.anchor = np.array(new_anchor)
+				anchor_list.append(new_anchor)
+
+			self.rotate()
+
+		def radius_list(self):
+			# return array of points that are a distance between [radius-1, radius]
+			rl = []
+			for i in range(-self.radius-1, self.radius+1):
+				for j in range(-self.radius-1, self.radius+1):
+					if 0 <= np.linalg.norm([i,j])-self.radius+1 < 1:
+						rl.append([i,j])
+
+			return list(sorted(rl, key=lambda r: math.atan2(r[0], r[1])))
 
 	ball = Ball(ball_radius, ball_centre, anchor)
 
@@ -348,13 +350,9 @@ def roll_edge(ref, points_rc):
 	# 5. add points that are exactly a radius away to the list
 	# 6. set anchor to any new point encountered
 
-	for i in range(1000):
-	# while True:
-		# filter to within one diamater of ball
-		diameter_list = list(filter(lambda p: np.linalg.norm(p - ball.centre) < 2 * ball.radius, points_rc))
-
-		ball.checkmove(diameter_list)
-		# print(ball.centre)
-		# print(i, len(anchor_list))
+	i = 0
+	while np.linalg.norm(np.array(max_rc) - np.array(anchor_list[-1]))>ball_radius or len(anchor_list)<2*ball_radius:
+		i += 1
+		ball.search()
 
 	return anchor_list

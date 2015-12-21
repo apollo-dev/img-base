@@ -6,16 +6,19 @@ from django.conf import settings
 
 # local
 from apps.expt.models import Experiment
-from apps.img.util import cut_to_black, nonzero_mean, edge_image, sort_edge, fold_edge, edge_fall, roll_edge
+from apps.img.util import cut_to_black, nonzero_mean, edge_image, sort_edge, fold_edge, edge_fall, roll_edge_v1
 
 # util
 import os
+import math
 import numpy as np
 from os.path import join, exists, splitext
 from optparse import make_option
 from subprocess import call
 import shutil as sh
 import matplotlib.pyplot as plt
+from scipy.signal import find_peaks_cwt as find_peaks
+from scipy.ndimage.filters import gaussian_filter as gf
 
 spacer = ' ' *	20
 
@@ -65,16 +68,44 @@ class Command(BaseCommand):
 
 				# get list of points
 				points_r, points_c = np.where(edge_img)
-				points = list(zip(points_r, points_c))
-				sorted_points = roll_edge(np.array([cell_mask.r, cell_mask.c]), points)
-				# sorted_points = sort_edge((cell_mask.r, cell_mask.c), points)
-				# sorted_points = fold_edge((cell_mask.r, cell_mask.c), points)
-				# sorted_points = edge_fall((cell_mask.r, cell_mask.c), points)
-				plt.plot([point[1] for point in sorted_points], [point[0] for point in sorted_points], label=cell_mask.channel.name, color=colours[i])
-				plt.scatter(points_c, points_r, label=cell_mask.channel.name, color=colours[i])
+				points = [list(lm) for lm in list(zip(points_r, points_c))]
+
+				sorted_points = roll_edge_v1(points)
+
+				# plot distances in order
+				cell_centre = np.array([cell_mask.r, cell_mask.c])
+				distances = np.array([np.linalg.norm(cell_centre - np.array(p)) for p in sorted_points])
+				argmin = np.argmin(distances)
+				distances = np.roll(distances, -argmin)
+				distances = gf(distances, sigma=2)
+				# plt.plot(distances)
+				# plt.scatter(cell_mask.c, cell_mask.r)
+
+				# find peaks in distance array
+				peaks = find_peaks(distances, np.array([9]))
+				# plt.scatter(peaks, [distances[peak] for peak in peaks])
+
+				# roll back to find true peak positions
+				true_peaks = np.array(peaks) + argmin
+				true_peaks[true_peaks>=len(sorted_points)] -= len(sorted_points)
+
+				# find end point of protrusions
+				protrusion_end_points = [sorted_points[peak] for peak in true_peaks]
+
+				for protrusion_end_point in protrusion_end_points:
+					print('new protrusion for cell mask {} for cell instance {}'.format(cell_mask.pk, cell_instance.pk))
+					relative_end_point = cell_centre - np.array(protrusion_end_point)
+					print('length from centre: {} microns'.format(np.linalg.norm(relative_end_point * series.scaling())))
+					print('orientation: {} degrees'.format(180 / math.pi * math.atan2(relative_end_point[0], relative_end_point[1])))
+
+				# plt.scatter([sorted_points[peak][1] for peak in true_peaks], [sorted_points[peak][0] for peak in true_peaks])
+
+				# plot outlines to check
+				# plt.plot([point[1] for point in sorted_points], [point[0] for point in sorted_points], label='radius: 2')
+				# plt.scatter(points_c, points_r, label=cell_mask.channel.name, color=colours[i])
 
 			# plt.legend()
-			plt.axis('equal')
+			# plt.axis('equal')
 			plt.show()
 
 		else:
