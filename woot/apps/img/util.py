@@ -302,29 +302,49 @@ def roll_edge_v1(points_rc, ball_radius=3):
 		def rotate(self):
 			# get radius list relative to anchor
 			anchor_radius_list = self.radius_list()
-			relative_centre = self.anchor - self.centre
+			relative_centre = self.centre - self.anchor
 			radius_list_index = anchor_radius_list.index(relative_centre.tolist())
-			radius_list_index = radius_list_index if radius_list_index < len(anchor_radius_list)-1 else 0 # full rotation
-			new_centre = anchor_radius_list[radius_list_index+1]
+			radius_list_index = radius_list_index if radius_list_index > 0 else len(anchor_radius_list)-1 # full rotation
+			new_centre = anchor_radius_list[radius_list_index-1]
+
+			# angle traversed
+			# angle_traversed = math.acos(np.dot(np.array(new_centre), np.array(relative_centre)) / (np.linalg.norm(new_centre) * np.linalg.norm(relative_centre)))
+
 			self.centre = np.array(new_centre) + self.anchor
 
 		def search(self):
 			# get radius list relative to centre
 			centre_radius_list = self.radius_list()
+			relative_centre = self.centre - self.anchor
+
 			points_around_centre = [(np.array(lm)+self.centre).tolist() for lm in centre_radius_list]
 
 			# The difference here is that we need to go the opposite direction from the centre rotation.
 			# To do this, we need to find the centre point in the array and take everything until that point, but reversed.
 			# This is in the manner of a ships compass in measuring distances on a map.
 			index_of_anchor = points_around_centre.index(self.anchor.tolist())
-			points_to_search = list(reversed(points_around_centre[:index_of_anchor])) + list(reversed(points_around_centre[index_of_anchor+1:]))
+
+			# 1. order points by angle from anchor position
+
+
+			# 2.
+			# points_to_search = list(reversed(points_around_centre[:index_of_anchor])) + list(reversed(points_around_centre[index_of_anchor+1:]))
+			points_to_search = points_around_centre[index_of_anchor+1:] + points_around_centre[:index_of_anchor] if index_of_anchor!=len(points_around_centre)-1 else points_around_centre[:-1]
 
 			new_anchor = None
+			# print(self.anchor)
 			for p in points_to_search:
-				if new_anchor is None and p in points_rc and not p in anchor_list[-10:]:
+				# print(p, new_anchor is None, p in points_rc, p not in anchor_list, new_anchor is None and p in points_rc and p not in anchor_list)
+				# anchor_list.append(p)
+				if new_anchor is None and p in points_rc and p not in anchor_list:
+					# print('new anchor: {}'.format(p))
 					new_anchor = p
 
 			if new_anchor is not None:
+				anchor_difference = np.array(new_anchor) - self.anchor
+				# print(self.centre)
+				# self.centre += anchor_difference # move centre linearly with changing anchor
+				# print(self.centre)
 				self.anchor = np.array(new_anchor)
 				anchor_list.append(new_anchor)
 
@@ -351,8 +371,11 @@ def roll_edge_v1(points_rc, ball_radius=3):
 	# 6. set anchor to any new point encountered
 
 	i = 0
-	while np.linalg.norm(np.array(max_rc) - np.array(anchor_list[-1]))>ball_radius or len(anchor_list)<2*ball_radius:
+	while (np.linalg.norm(np.array(max_rc) - np.array(anchor_list[-1]))>0.5*ball_radius or len(anchor_list)<2*ball_radius):
+		print(i, len(anchor_list))
 		i += 1
 		ball.search()
+
+	anchor_list = anchor_list[::ball_radius]
 
 	return anchor_list

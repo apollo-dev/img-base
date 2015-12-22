@@ -320,6 +320,7 @@ class CellMask(models.Model):
 		points_rc = [list(lm) for lm in list(zip(points_r, points_c))]
 
 		# sort points using a fixed radius
+		print(self.cell_instance.pk, self.pk)
 		sorted_points = roll_edge_v1(points_rc)
 
 		# get cell centre and calculate distances of edge points from this point

@@ -54,7 +54,8 @@ class Command(BaseCommand):
 			experiment = Experiment.objects.get(name=experiment_name)
 			series = experiment.series.get(name=series_name)
 
-			cell_instance = series.cell_instances.get(t=43, cell__pk=9) # nice protrusion with visible brightfield
+			# cell_instance = series.cell_instances.get(t=43, cell__pk=9) # nice protrusion with visible brightfield
+			cell_instance = series.cell_instances.get(pk=207)
 
 			# load mask image
 			# 1. for each cell mask, load mask image
@@ -101,8 +102,8 @@ class Command(BaseCommand):
 				# plt.scatter([sorted_points[peak][1] for peak in true_peaks], [sorted_points[peak][0] for peak in true_peaks])
 
 				# plot outlines to check
-				# plt.plot([point[1] for point in sorted_points], [point[0] for point in sorted_points], label='radius: 2')
-				# plt.scatter(points_c, points_r, label=cell_mask.channel.name, color=colours[i])
+				plt.plot([point[1] for point in sorted_points], [point[0] for point in sorted_points], label='radius: 2')
+				plt.scatter(points_c, points_r, label=cell_mask.channel.name, color=colours[i])
 
 			# plt.legend()
 			# plt.axis('equal')
