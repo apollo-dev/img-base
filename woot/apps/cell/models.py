@@ -11,6 +11,7 @@ from apps.img.util import *
 # util
 import numpy as np
 from scipy.ndimage.morphology import binary_dilation as dilate
+from scipy.ndimage.filters import gaussian_filter as gf
 from scipy.signal import find_peaks_cwt as find_peaks
 import matplotlib.pyplot as plt
 
@@ -167,7 +168,6 @@ class CellInstance(models.Model):
 
 	# properties
 	confidence = models.FloatField(default=0.0)
-	region_condition = models.CharField(max_length=255)
 
 	r = models.IntegerField(default=0)
 	c = models.IntegerField(default=0)
@@ -177,141 +177,6 @@ class CellInstance(models.Model):
 	vr = models.IntegerField(default=0)
 	vc = models.IntegerField(default=0)
 	vz = models.IntegerField(default=0)
-
-	# 4. cell profiler
-	AreaShape_Area = models.IntegerField(default=0)
-	AreaShape_Compactness = models.FloatField(default=0.0)
-	AreaShape_Eccentricity = models.FloatField(default=0.0)
-	AreaShape_EulerNumber = models.FloatField(default=0.0)
-	AreaShape_Extent = models.FloatField(default=0.0)
-	AreaShape_FormFactor = models.FloatField(default=0.0)
-	AreaShape_MajorAxisLength = models.FloatField(default=0.0)
-	AreaShape_MaximumRadius = models.FloatField(default=0.0)
-	AreaShape_MeanRadius = models.FloatField(default=0.0)
-	AreaShape_MedianRadius = models.FloatField(default=0.0)
-	AreaShape_MinorAxisLength = models.FloatField(default=0.0)
-	AreaShape_Orientation = models.FloatField(default=0.0)
-	AreaShape_Perimeter = models.FloatField(default=0.0)
-	AreaShape_Solidity = models.FloatField(default=0.0)
-	Location_Center_X = models.FloatField(default=0.0)
-	Location_Center_Y = models.FloatField(default=0.0)
-
-	# methods
-	def R(self):
-		return self.r*self.series.rmop
-
-	def C(self):
-		return self.c*self.series.cmop
-
-	def Z(self):
-		return self.z*self.series.zmop
-
-	def T(self):
-		return self.t*self.series.tpf
-
-	def V(self):
-		return np.sqrt(self.VR()**2 + self.VC()**2)
-
-	def VR(self):
-		return self.vr*self.series.rmop / self.series.tpf
-
-	def VC(self):
-		return self.vc*self.series.cmop / self.series.tpf
-
-	def VZ(self):
-		return self.vz*self.series.zmop / self.series.tpf
-
-	def A(self):
-		return self.AreaShape_Area*self.series.rmop*self.series.cmop
-
-	def raw_line(self):
-		return '{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{} \n'.format(
-			self.experiment.name,
-			self.series.name,
-			self.cell.pk,
-			self.r,
-			self.c,
-			self.z,
-			self.t,
-			self.vr,
-			self.vc,
-			self.vz,
-			self.region.name if self.region is not None else 'No Mask',
-			self.AreaShape_Area,
-			self.AreaShape_Compactness,
-			self.AreaShape_Eccentricity,
-			self.AreaShape_EulerNumber,
-			self.AreaShape_Extent,
-			self.AreaShape_FormFactor,
-			self.AreaShape_MajorAxisLength,
-			self.AreaShape_MaximumRadius,
-			self.AreaShape_MeanRadius,
-			self.AreaShape_MedianRadius,
-			self.AreaShape_MinorAxisLength,
-			self.AreaShape_Orientation,
-			self.AreaShape_Perimeter,
-			self.AreaShape_Solidity
-		)
-	def line(self):
-		return '{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}\n'.format(
-			self.experiment.name,
-			self.series.name,
-			self.cell.pk,
-			self.R(),
-			self.C(),
-			self.Z(),
-			self.t,
-			self.T(),
-			self.VR(),
-			self.VC(),
-			self.VZ(),
-			self.V(),
-			self.region.name if self.region is not None else 'No Mask',
-			self.A(),
-			self.AreaShape_Compactness,
-			self.AreaShape_Eccentricity,
-			self.AreaShape_EulerNumber,
-			self.AreaShape_FormFactor,
-			self.AreaShape_Orientation,
-			self.AreaShape_Solidity
-		)
-	def set_from_masks(self, unique):
-		# some decision making can be made here, but what I will do for now is just take the only make it has
-		masks = self.masks.filter(channel__name__contains=unique)
-
-		if masks:
-			mask = masks[0]
-			self.r = mask.r
-			self.c = mask.c
-			self.t = mask.t
-			self.AreaShape_Area = mask.AreaShape_Area
-			self.AreaShape_Compactness = mask.AreaShape_Compactness
-			self.AreaShape_Eccentricity = mask.AreaShape_Eccentricity
-			self.AreaShape_EulerNumber = mask.AreaShape_EulerNumber
-			self.AreaShape_Extent = mask.AreaShape_Extent
-			self.AreaShape_FormFactor = mask.AreaShape_FormFactor
-			self.AreaShape_MajorAxisLength = mask.AreaShape_MajorAxisLength
-			self.AreaShape_MaximumRadius = mask.AreaShape_MaximumRadius
-			self.AreaShape_MeanRadius = mask.AreaShape_MeanRadius
-			self.AreaShape_MedianRadius = mask.AreaShape_MedianRadius
-			self.AreaShape_MinorAxisLength = mask.AreaShape_MinorAxisLength
-			self.AreaShape_Orientation = mask.AreaShape_Orientation
-			self.AreaShape_Perimeter = mask.AreaShape_Perimeter
-			self.AreaShape_Solidity = mask.AreaShape_Solidity
-			self.Location_Center_X = mask.Location_Center_X
-			self.Location_Center_Y = mask.Location_Center_Y
-			self.region = mask.region
-			self.region_instance = mask.region_instance
-			self.confidence = mask.confidence
-			self.save()
-	def set_from_markers(self):
-		# some decision making can be made here, but what I will do for now is just take the only make it has
-		marker = self.track_instance.markers.all()[0]
-
-		self.r = marker.r
-		self.c = marker.c
-		self.t = marker.track_instance.t
-		self.save()
 
 class CellMask(models.Model):
 	# connections
@@ -359,11 +224,6 @@ class CellMask(models.Model):
 	Location_Center_Y = models.FloatField(default=0.0)
 
 	# methods
-	def find_protrusions(self):
-		# 1. find edge pixels
-		# 2.
-		pass
-
 	def R(self):
 		return self.r*self.series.rmop
 
@@ -450,6 +310,65 @@ class CellMask(models.Model):
 		mask[mask>0] = 1
 		return mask
 
+	def find_protrusions(self):
+		# load mask image and find edge
+		mask_img = self.load()
+		edge_img = edge_image(mask_img)
+
+		# get list of points that lie on the edge: points_rc
+		points_r, points_c = np.where(edge_img)
+		points_rc = [list(lm) for lm in list(zip(points_r, points_c))]
+
+		# sort points using a fixed radius
+		print(self.cell_instance.pk, self.pk)
+		sorted_points = roll_edge_v1(points_rc)
+
+		# get cell centre and calculate distances of edge points from this point
+		cell_centre = np.array([self.r, self.c])
+		distances = np.array([np.linalg.norm(cell_centre - np.array(p)) for p in sorted_points])
+
+		# smooth to aid peak finding and shift the points to leave the smallest distance at zero
+		argmin = np.argmin(distances)
+		distances = np.roll(distances, -argmin)
+		distances = gf(distances, sigma=2)
+
+		# find peaks
+		peaks = find_peaks(distances, np.array([9]))
+
+		# shift peaks back to their original positions
+		true_peaks = np.array(peaks) + argmin
+		true_peaks[true_peaks>=len(sorted_points)] -= len(sorted_points) # rotate
+
+		# find end points
+		protrusion_end_points = [sorted_points[peak] for peak in true_peaks]
+
+		# create new protrusion for each end point
+		for protrusion_end_point in protrusion_end_points:
+			relative_end_point = cell_centre - np.array(protrusion_end_point)
+
+			# parameters
+			r = relative_end_point[0]
+			c = relative_end_point[1]
+			length_from_centre = np.linalg.norm(relative_end_point * self.series.scaling()) # in microns
+			length_from_mean = length_from_centre - np.mean(distances)
+			orientation_from_horizontal = math.atan2(relative_end_point[0], relative_end_point[1])
+
+			print(self.cell_instance.pk, self.pk, r, c, length_from_centre, orientation_from_horizontal)
+
+			# protrusion, protrusion_created = self.protrusions.get_or_create(experiment=self.experiment,
+			# 																																series=self.series,
+			# 																																cell=self.cell,
+			# 																																cell_instance=self.cell_instance,
+			# 																																region=self.region,
+			# 																																region_instance=self.region_instance,
+			# 																																r=r,
+			# 																																c=c)
+			# if protrusion_created:
+			# 	protrusion.length = length_from_centre
+			# 	protrusion.length_from_mean = length_from_mean
+			# 	protrusion.orientation = orientation_from_horizontal
+			# 	protrusion.save()
+
 class Protrusion(models.Model):
 	# connections
 	experiment = models.ForeignKey(Experiment, related_name='protrusions')
@@ -459,8 +378,10 @@ class Protrusion(models.Model):
 	cell_mask = models.ForeignKey(CellMask, related_name='protrusions')
 	region = models.ForeignKey(Region, related_name='protrusions', null=True)
 	region_instance = models.ForeignKey(RegionInstance, related_name='protrusions', null=True)
-	track_instance = models.OneToOneField(TrackInstance, related_name='protrusions')
 
 	# properties
+	r = models.IntegerField(default=0)
+	c = models.IntegerField(default=0)
 	length = models.FloatField(default=0.0)
+	length_from_mean = models.FloatField(default=0.0)
 	orientation = models.FloatField(default=0.0)

@@ -96,6 +96,12 @@ class Composite(models.Model):
 
 			# loop over image
 			Z = np.argmax(gfp, axis=2) + delta_z
+
+			# outliers
+			Z[Z<0] = 0
+			Z[Z>composite.series.zs-1] = composite.series.zs-1
+
+			# loop over levels
 			for level in range(bf.shape[2]):
 				bf[:,:,level] = convolve(bf[:,:,level], np.ones((R,R)))
 				Zbf[Z==level] = bf[Z==level,level]
@@ -185,11 +191,11 @@ class Composite(models.Model):
 		for t in range(self.series.ts):
 			print('step02 | processing mod_zedge t{}/{}...'.format(t+1, self.series.ts), end='\r')
 
-			zdiff_mask = self.masks.get(channel__name__contains=channel_unique_override, t=t).load()
-			zbf = exposure.rescale_intensity(self.gons.get(channel__name='-mgfp', t=t).load() * 1.0)
+			zunique_mask = self.masks.get(channel__name__contains=channel_unique_override, t=t).load()
+			zbf = exposure.rescale_intensity(self.gons.get(channel__name='-zbf', t=t).load() * 1.0)
 			zedge = zbf.copy()
 
-			binary_mask = zdiff_mask>0
+			binary_mask = zunique_mask>0
 			outside_edge = distance_transform_edt(dilate(edge_image(binary_mask), iterations=4))
 			outside_edge = 1.0 - exposure.rescale_intensity(outside_edge * 1.0)
 			zedge *= outside_edge * outside_edge
@@ -211,7 +217,7 @@ class Composite(models.Model):
 
 		for t in range(self.series.ts):
 			zbf_gon = self.gons.get(t=t, channel__name='-zbf')
-			zcomp_gon = self.gons.get(t=t, channel__name='-zdiff')
+			zcomp_gon = self.gons.get(t=t, channel__name='-zunique')
 			zmean_gon = self.gons.get(t=t, channel__name='-zedge')
 			mask_mask = self.masks.get(t=t, channel__name__contains=channel_unique_override)
 
@@ -271,30 +277,30 @@ class Composite(models.Model):
 
 			imsave(join(tile_path, 'tile_{}_s{}_marker-{}_t{}.tiff'.format(self.experiment.name, self.series.name, channel_unique_override, str_value(t, self.series.ts))), whole)
 
-	def create_zdiff(self):
+	def create_zunique(self):
 
-		zdiff_channel, zdiff_channel_created = self.channels.get_or_create(name='-zdiff')
+		zunique_channel, zunique_channel_created = self.channels.get_or_create(name='-zunique')
 
 		for t in range(self.series.ts):
-			print('creating zdiff t{}/{}'.format(t+1, self.series.ts), end='\r' if t<self.series.ts-1 else '\n')
+			print('creating zunique t{}/{}'.format(t+1, self.series.ts), end='\r' if t<self.series.ts-1 else '\n')
 			zmean = exposure.rescale_intensity(self.gons.get(channel__name='-zmean', t=t).load() * 1.0)
 			zmod = exposure.rescale_intensity(self.gons.get(channel__name='-zmod', t=t).load() * 1.0)
 
-			zdiff = np.zeros(zmean.shape)
+			zunique = np.zeros(zmean.shape)
 			for unique in np.unique(zmod):
-				zdiff[zmod==unique] = np.mean(zmean[zmod==unique]) / np.sum(zmean)
+				zunique[zmod==unique] = np.mean(zmean[zmod==unique]) / np.sum(zmean)
 
-			zdiff = gf(zdiff, sigma=3)
+			zunique = gf(zunique, sigma=3)
 
-			zdiff_gon, zdiff_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=zdiff_channel, t=t)
-			zdiff_gon.set_origin(0,0,0,t)
-			zdiff_gon.set_extent(self.series.rs, self.series.cs, 1)
+			zunique_gon, zunique_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=zunique_channel, t=t)
+			zunique_gon.set_origin(0,0,0,t)
+			zunique_gon.set_extent(self.series.rs, self.series.cs, 1)
 
-			zdiff_gon.array = zdiff.copy()
-			zdiff_gon.save_array(self.experiment.composite_path, self.templates.get(name='source'))
-			zdiff_gon.save()
+			zunique_gon.array = zunique.copy()
+			zunique_gon.save_array(self.experiment.composite_path, self.templates.get(name='source'))
+			zunique_gon.save()
 
-		return zdiff_channel
+		return zunique_channel
 
 class Template(models.Model):
 	# connections
@@ -439,15 +445,10 @@ class Channel(models.Model):
 					cell_mask.AreaShape_Orientation = float(cell_mask_data['AreaShape_Orientation']) if str(cell_mask_data['AreaShape_Orientation']) != 'nan' else -1.0
 					cell_mask.AreaShape_Perimeter = float(cell_mask_data['AreaShape_Perimeter']) if str(cell_mask_data['AreaShape_Perimeter']) != 'nan' else -1.0
 					cell_mask.AreaShape_Solidity = float(cell_mask_data['AreaShape_Solidity']) if str(cell_mask_data['AreaShape_Solidity']) != 'nan' else -1.0
-
+					cell_mask.Location_Center_X = float(cell_mask_data['Location_Center_X']) if str(cell_mask_data['Location_Center_X']) != 'nan' else 0
+					cell_mask.Location_Center_Y = float(cell_mask_data['Location_Center_Y']) if str(cell_mask_data['Location_Center_Y']) != 'nan' else 0
+					# cell_mask.find_protrusions()
 					cell_mask.save()
-
-					# for now
-					cell_instance.set_from_masks(unique)
-
-				else:
-					# for now
-					cell_instance.set_from_markers()
 
 		# 6. calculate cell velocities
 		print('calculating velocities...')

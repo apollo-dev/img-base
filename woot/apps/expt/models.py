@@ -270,6 +270,12 @@ class Series(models.Model):
 		else:
 			return (self.rs, self.cs, self.zs)
 
+	def scaling(self, d=2):
+		if d==2:
+			return np.array([self.rmop, self.cmop])
+		elif d==3:
+			return np.array([self.rmop, self.cmop, self.zmop])
+
 	def export_data(self):
 		# composite for datafile
 		composite = self.composites.get()

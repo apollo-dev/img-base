@@ -139,23 +139,21 @@ class Command(BaseCommand):
 			# 6. make zmod channels
 			if composite.channels.filter(name='-zmod').count()==0:
 				composite.create_zmod()
-
+				composite.create_zunique()
 			else:
 				print('step01 | zmod already exists...')
 
 			# 7. make bmod channels
 			if composite.channels.filter(name='-bmod').count()==0:
 				composite.create_selinummi()
-
 			else:
-				print('step01 | zmod already exists...')
+				print('step01 | bmod already exists...')
 
 			# 8. make max gfp channels
 			if composite.channels.filter(name='-mgfp').count()==0:
 				composite.create_max_gfp()
-
 			else:
-				print('step01 | zmod already exists...')
+				print('step01 | mgfp already exists...')
 
 		else:
 			print('Please enter an experiment')

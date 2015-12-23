@@ -69,9 +69,9 @@ class Command(BaseCommand):
 		series_name = options['series']
 		t = options['t']
 
-		R = 5
+		R = 1
 		delta_z = -8
-		sigma = 10
+		# sigma = 5
 
 		if experiment_name!='' and series_name!='':
 			experiment = Experiment.objects.get(name=experiment_name)
@@ -81,33 +81,43 @@ class Command(BaseCommand):
 			composite = series.composites.get()
 
 			# load gfp
-			print('done')
 			gfp_gon = composite.gons.get(t=t, channel__name='0')
-			gfp = exposure.rescale_intensity(gfp_gon.load() * 1.0)
-			gfp = gf(gfp, sigma=sigma) # <<< SMOOTHING
+			gfp_start = exposure.rescale_intensity(gfp_gon.load() * 1.0)
+			print('loaded gfp...')
 
 			# load bf
-			print('done')
 			bf_gon = composite.gons.get(t=t, channel__name='1')
 			bf = exposure.rescale_intensity(bf_gon.load() * 1.0)
+			print('loaded bf...')
 
-			# initialise images
-			print('done')
-			Z = np.zeros(composite.series.shape(d=2), dtype=int)
-			Zmean = np.zeros(composite.series.shape(d=2))
-			Zbf = np.zeros(composite.series.shape(d=2))
+			for sigma in [0, 5, 10, 20]:
+				gfp = gf(gfp_start, sigma=sigma) # <<< SMOOTHING
+				for level in range(gfp.shape[2]):
+					print('level {} {}...'.format(R, level))
+					gfp[:,:,level] = convolve(gfp[:,:,level], np.ones((R,R)))
 
-			Z = np.argmax(gfp, axis=2) + delta_z
-			for level in range(bf.shape[2]):
-				bf[:,:,level] = convolve(bf[:,:,level], np.ones((R,R)))
-				Zbf[Z==level] = bf[Z==level,level]
+				# initialise images
+				Z = np.zeros(composite.series.shape(d=2), dtype=int)
+				Zmean = np.zeros(composite.series.shape(d=2))
+				Zbf = np.zeros(composite.series.shape(d=2))
 
-			Zmean = 1 - np.mean(gfp, axis=2) / np.max(gfp, axis=2)
+				Z = np.argmax(gfp, axis=2) + delta_z
+
+				# outliers
+				Z[Z<0] = 0
+				Z[Z>composite.series.zs-1] = composite.series.zs-1
+
+				for level in range(bf.shape[2]):
+					print('level {}...'.format(level))
+					bf_level = bf[:,:,level]
+					Zbf[Z==level] = bf_level[Z==level]
+
+				Zmean = 1 - np.mean(gfp, axis=2) / np.max(gfp, axis=2)
+
+				imsave('zbf_R-{}_sigma-{}_delta_z{}.png'.format(R, sigma, delta_z), Zbf)
 
 			# plt.imshow(Zbf, cmap='Greys_r')
 			# plt.show()
-
-			imsave('zbf_sigma_too_high.tiff', Zbf)
 
 		else:
 			print('Please enter an experiment')
