@@ -119,8 +119,6 @@ class Command(BaseCommand):
 			composite.current_zedge_unique = zedge_unique
 			composite.save()
 
-			# composite.create_tile(channel_unique_override=zedge_unique)
-
 			# segment other channels
 			selinummi_channel = composite.channels.get(name__contains='bmod')
 			selinummi_channel.segment()
