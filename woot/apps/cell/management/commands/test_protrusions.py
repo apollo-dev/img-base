@@ -55,13 +55,13 @@ class Command(BaseCommand):
 			series = experiment.series.get(name=series_name)
 
 			# cell_instance = series.cell_instances.get(t=43, cell__pk=9) # nice protrusion with visible brightfield
-			cell_instance = series.cell_instances.get(pk=207)
+			cell_instance = series.cell_instances.get(pk=198)
 
 			# load mask image
 			# 1. for each cell mask, load mask image
 			outlines = {}
 			colours = ['red','green','blue','purple']
-			for i, cell_mask in enumerate(cell_instance.masks.exclude(channel__name__contains='zmean')):
+			for i, cell_mask in enumerate(cell_instance.masks.filter(channel__name__contains='zedge')):
 				mask_img = cell_mask.load()
 
 				# get edge
@@ -96,6 +96,7 @@ class Command(BaseCommand):
 				for protrusion_end_point in protrusion_end_points:
 					print('new protrusion for cell mask {} for cell instance {}'.format(cell_mask.pk, cell_instance.pk))
 					relative_end_point = cell_centre - np.array(protrusion_end_point)
+					print(cell_centre, protrusion_end_point)
 					print('length from centre: {} microns'.format(np.linalg.norm(relative_end_point * series.scaling())))
 					print('orientation: {} degrees'.format(180 / math.pi * math.atan2(relative_end_point[0], relative_end_point[1])))
 
@@ -103,7 +104,7 @@ class Command(BaseCommand):
 
 				# plot outlines to check
 				plt.plot([point[1] for point in sorted_points], [point[0] for point in sorted_points], label='radius: 2')
-				plt.scatter(points_c, points_r, label=cell_mask.channel.name, color=colours[i])
+				# plt.scatter(points_c, points_r, label=cell_mask.channel.name, color=colours[i])
 
 			# plt.legend()
 			# plt.axis('equal')

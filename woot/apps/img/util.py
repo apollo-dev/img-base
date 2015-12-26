@@ -371,8 +371,8 @@ def roll_edge_v1(points_rc, ball_radius=3):
 	# 6. set anchor to any new point encountered
 
 	i = 0
-	while (np.linalg.norm(np.array(max_rc) - np.array(anchor_list[-1]))>0.5*ball_radius or len(anchor_list)<2*ball_radius):
-		print(i, len(anchor_list))
+	while (np.linalg.norm(np.array(max_rc) - np.array(anchor_list[-1]))>0.5*ball_radius or len(anchor_list)<2*ball_radius) and i<len(ball.radius_list())*len(points_rc):
+		# print(i, len(anchor_list))
 		i += 1
 		ball.search()
 

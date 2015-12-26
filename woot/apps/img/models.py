@@ -222,8 +222,8 @@ class Composite(models.Model):
 			mask_mask = self.masks.get(t=t, channel__name__contains=channel_unique_override)
 
 			zbf = zbf_gon.load()
-			zcomp = zcomp_gon.load()
-			zmean = zmean_gon.load()
+			zcomp = zcomp_gon.load()[:,:,0]
+			zmean = zmean_gon.load()[:,:,0]
 			mask = mask_mask.load()
 
 			mask_outline = mask_edge_image(mask)

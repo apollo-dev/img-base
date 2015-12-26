@@ -353,21 +353,21 @@ class CellMask(models.Model):
 			length_from_mean = length_from_centre - np.mean(distances)
 			orientation_from_horizontal = math.atan2(relative_end_point[0], relative_end_point[1])
 
-			print(self.cell_instance.pk, self.pk, r, c, length_from_centre, orientation_from_horizontal)
+			# print(self.cell_instance.pk, self.pk, r, c, length_from_centre, orientation_from_horizontal)
 
-			# protrusion, protrusion_created = self.protrusions.get_or_create(experiment=self.experiment,
-			# 																																series=self.series,
-			# 																																cell=self.cell,
-			# 																																cell_instance=self.cell_instance,
-			# 																																region=self.region,
-			# 																																region_instance=self.region_instance,
-			# 																																r=r,
-			# 																																c=c)
-			# if protrusion_created:
-			# 	protrusion.length = length_from_centre
-			# 	protrusion.length_from_mean = length_from_mean
-			# 	protrusion.orientation = orientation_from_horizontal
-			# 	protrusion.save()
+			protrusion, protrusion_created = self.protrusions.get_or_create(experiment=self.experiment,
+																																			series=self.series,
+																																			cell=self.cell,
+																																			cell_instance=self.cell_instance,
+																																			region=self.region,
+																																			region_instance=self.region_instance,
+																																			r=r,
+																																			c=c)
+			if protrusion_created:
+				protrusion.length = length_from_centre
+				protrusion.length_from_mean = length_from_mean
+				protrusion.orientation = orientation_from_horizontal
+				protrusion.save()
 
 class Protrusion(models.Model):
 	# connections
