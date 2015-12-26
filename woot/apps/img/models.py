@@ -397,7 +397,8 @@ class Channel(models.Model):
 				# 2. create cell instance
 				cell_instance, cell_instance_created = cell.instances.get_or_create(experiment=cell.experiment,
 																																						series=cell.series,
-																																						track_instance=marker.track_instance)
+																																						track_instance=marker.track_instance,
+																																						t=marker.track_instance.t)
 
 				# 3. create cell mask
 				gray_value_id = mask[marker.r, marker.c]

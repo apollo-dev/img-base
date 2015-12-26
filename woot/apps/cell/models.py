@@ -359,6 +359,7 @@ class CellMask(models.Model):
 																																			series=self.series,
 																																			cell=self.cell,
 																																			cell_instance=self.cell_instance,
+																																			channel=self.channel,
 																																			region=self.region,
 																																			region_instance=self.region_instance,
 																																			r=r,
@@ -376,6 +377,7 @@ class Protrusion(models.Model):
 	cell = models.ForeignKey(Cell, related_name='protrusions')
 	cell_instance = models.ForeignKey(CellInstance, related_name='protrusions')
 	cell_mask = models.ForeignKey(CellMask, related_name='protrusions')
+	channel = models.ForeignKey(MaskChannel, related_name='protrusions')
 	region = models.ForeignKey(Region, related_name='protrusions', null=True)
 	region_instance = models.ForeignKey(RegionInstance, related_name='protrusions', null=True)
 
