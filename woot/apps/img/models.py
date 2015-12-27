@@ -454,7 +454,7 @@ class Channel(models.Model):
 		# 6. calculate cell velocities
 		print('calculating velocities...')
 		for cell in self.composite.experiment.cells.all():
-			cell.calculate_velocities()
+			cell.calculate_velocities(unique)
 			cell.calculate_confidences()
 
 		return unique

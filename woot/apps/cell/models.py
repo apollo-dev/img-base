@@ -138,20 +138,22 @@ class Cell(models.Model):
 	confidence = models.FloatField(default=0.0)
 
 	# methods
-	def calculate_velocities(self):
-		previous_cell_instance = None
+	def calculate_velocities(self, unique):
+		previous_mask = None
 		for cell_instance in self.instances.order_by('t'):
+			mask = cell_instance.masks.get(channel__name__contains=unique)
 			if previous_cell_instance is None:
-				cell_instance.vr = 0
-				cell_instance.vc = 0
-				cell_instance.vz = 0
+				mask.vr = 0
+				mask.vc = 0
+				mask.vz = 0
 			else:
-				cell_instance.vr = cell_instance.r - previous_cell_instance.r
-				cell_instance.vc = cell_instance.c - previous_cell_instance.c
-				cell_instance.vz = cell_instance.z - previous_cell_instance.z
+				# velocities
+				mask.vr = mask.Location_Center_Y - previous_cell_instance.Location_Center_Y
+				mask.vc = mask.Location_Center_X - previous_cell_instance.Location_Center_X
+				mask.vz = mask.z - previous_cell_instance.z
 
-			cell_instance.save()
-			previous_cell_instance = cell_instance
+			mask.save()
+			previous_mask = mask
 
 	def calculate_confidences(self):
 		pass
