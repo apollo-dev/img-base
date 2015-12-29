@@ -143,42 +143,43 @@ class Command(BaseCommand):
 			# 4. Segment zbf channel
 			zbf_channel = composite.channels.get(name='-zbf')
 			unique = zbf_channel.segment_regions(region_marker_channel_name='-zbf')
+			print(unique)
 
 			# 5. re-run cell instance regions if necessary
-			region_mask_channel = composite.mask_channels.get(name__contains=unique)
-			if series.cells.count()>0:
-				for t in range(composite.series.ts):
-					# load region mask
-					region_mask_mask = region_mask_channel.masks.get(t=t)
-					region_mask = region_mask_mask.load()
-
-					for cell_instance in series.cell_instances.filter(track_instance__t=t):
-
-						# 3. create cell mask
-						region_gray_value_id = region_mask[cell_instance.r, cell_instance.c]
-						region_instance = composite.series.region_instances.filter(region_track_instance__t=t, mode_gray_value_id=region_gray_value_id)
-						if region_instance:
-							region_instance = region_instance[0]
-						else:
-							region_instance = None
-							for ri in composite.series.region_instances.filter(region_track_instance__t=t):
-								gray_value_ids = [ri_mask.gray_value_id for ri_mask in ri.masks.all()]
-								if region_instance is None and region_gray_value_id in gray_value_ids:
-									region_instance = ri
-
-						# for now
-						cell_instance.region = region_instance.region if region_instance is not None else None
-						cell_instance.region_instance = region_instance if region_instance is not None else None
-						cell_instance.save()
-
-				# make tile again
-				
-
-				# print out new data file
-				series.export_data()
+			# region_mask_channel = composite.mask_channels.get(name__contains=unique)
+			# if series.cells.count()>0:
+			# 	for t in range(composite.series.ts):
+			# 		# load region mask
+			# 		region_mask_mask = region_mask_channel.masks.get(t=t)
+			# 		region_mask = region_mask_mask.load()
+			#
+			# 		for cell_instance in series.cell_instances.filter(track_instance__t=t):
+			#
+			# 			# 3. create cell mask
+			# 			region_gray_value_id = region_mask[cell_instance.r, cell_instance.c]
+			# 			region_instance = composite.series.region_instances.filter(region_track_instance__t=t, mode_gray_value_id=region_gray_value_id)
+			# 			if region_instance:
+			# 				region_instance = region_instance[0]
+			# 			else:
+			# 				region_instance = None
+			# 				for ri in composite.series.region_instances.filter(region_track_instance__t=t):
+			# 					gray_value_ids = [ri_mask.gray_value_id for ri_mask in ri.masks.all()]
+			# 					if region_instance is None and region_gray_value_id in gray_value_ids:
+			# 						region_instance = ri
+			#
+			# 			# for now
+			# 			cell_instance.region = region_instance.region if region_instance is not None else None
+			# 			cell_instance.region_instance = region_instance if region_instance is not None else None
+			# 			cell_instance.save()
+			#
+			# 	# make tile again
+			# 	composite.create_tile(composite.current_zedge_unique)
+			#
+			# 	# print out new data file
+			# 	series.export_data()
 
 			# 6. Region tile
-			composite.region_tile()
+			composite.create_region_tile(unique)
 
 		else:
 			print('Please enter an experiment')

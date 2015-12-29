@@ -210,6 +210,31 @@ class Composite(models.Model):
 
 		return zedge_channel
 
+	def create_zunique(self):
+
+		zunique_channel, zunique_channel_created = self.channels.get_or_create(name='-zunique')
+
+		for t in range(self.series.ts):
+			print('creating zunique t{}/{}'.format(t+1, self.series.ts), end='\r' if t<self.series.ts-1 else '\n')
+			zmean = exposure.rescale_intensity(self.gons.get(channel__name='-zmean', t=t).load() * 1.0)
+			zmod = exposure.rescale_intensity(self.gons.get(channel__name='-zmod', t=t).load() * 1.0)
+
+			zunique = np.zeros(zmean.shape)
+			for unique in np.unique(zmod):
+				zunique[zmod==unique] = np.mean(zmean[zmod==unique]) / np.sum(zmean)
+
+			zunique = gf(zunique, sigma=3)
+
+			zunique_gon, zunique_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=zunique_channel, t=t)
+			zunique_gon.set_origin(0,0,0,t)
+			zunique_gon.set_extent(self.series.rs, self.series.cs, 1)
+
+			zunique_gon.array = zunique.copy()
+			zunique_gon.save_array(self.experiment.composite_path, self.templates.get(name='source'))
+			zunique_gon.save()
+
+		return zunique_channel
+
 	def create_tile(self, channel_unique_override):
 		tile_path = join(self.experiment.video_path, 'tile', self.series.name, channel_unique_override)
 		if not exists(tile_path):
@@ -245,6 +270,7 @@ class Composite(models.Model):
 			zcomp_mask_g[mask_outline>0] = 0
 			zcomp_mask_b[mask_outline>0] = 0
 
+			# draw markers
 			markers = self.markers.filter(track_instance__t=t, track__cell__isnull=False)
 			for marker in markers:
 				if hasattr(marker.track_instance, 'cell_instance'):
@@ -270,6 +296,12 @@ class Composite(models.Model):
 					zcomp_mask_g[blank_slate>0] = 255
 					zcomp_mask_b[blank_slate>0] = 0
 
+			# draw regions
+			for region_instance in self.region_instances.filter(region_track_instance__t=t):
+				# load mask
+				mask = region_instance.masks.get()
+				# get outline of
+
 			# tile zbf, zbf_mask, zcomp, zcomp_mask
 			top_half = np.concatenate((np.dstack([zbf, zbf, zbf]), np.dstack([zbf_mask_r, zbf_mask_g, zbf_mask_b])), axis=0)
 			bottom_half = np.concatenate((np.dstack([zmean, zmean, zmean]), np.dstack([zcomp_mask_r, zcomp_mask_g, zcomp_mask_b])), axis=0)
@@ -277,30 +309,49 @@ class Composite(models.Model):
 
 			imsave(join(tile_path, 'tile_{}_s{}_marker-{}_t{}.tiff'.format(self.experiment.name, self.series.name, channel_unique_override, str_value(t, self.series.ts))), whole)
 
-	def create_zunique(self):
-
-		zunique_channel, zunique_channel_created = self.channels.get_or_create(name='-zunique')
+	def create_region_tile(self, channel_unique_override):
+		tile_path = join(self.experiment.video_path, 'regions', self.series.name, channel_unique_override)
+		if not exists(tile_path):
+			os.makedirs(tile_path)
 
 		for t in range(self.series.ts):
-			print('creating zunique t{}/{}'.format(t+1, self.series.ts), end='\r' if t<self.series.ts-1 else '\n')
-			zmean = exposure.rescale_intensity(self.gons.get(channel__name='-zmean', t=t).load() * 1.0)
-			zmod = exposure.rescale_intensity(self.gons.get(channel__name='-zmod', t=t).load() * 1.0)
+			zbf_gon = self.gons.get(t=t, channel__name='-zbf')
+			zcomp_gon = self.gons.get(t=t, channel__name='-zunique')
+			zmean_gon = self.gons.get(t=t, channel__name='-mgfp')
 
-			zunique = np.zeros(zmean.shape)
-			for unique in np.unique(zmod):
-				zunique[zmod==unique] = np.mean(zmean[zmod==unique]) / np.sum(zmean)
+			zbf = zbf_gon.load()
+			zcomp = zcomp_gon.load()
+			zmean = zmean_gon.load()
 
-			zunique = gf(zunique, sigma=3)
+			zbf_mask_r = zbf.copy()
+			zbf_mask_g = zbf.copy()
+			zbf_mask_b = zbf.copy()
 
-			zunique_gon, zunique_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=zunique_channel, t=t)
-			zunique_gon.set_origin(0,0,0,t)
-			zunique_gon.set_extent(self.series.rs, self.series.cs, 1)
+			zcomp_mask_r = zcomp.copy()
+			zcomp_mask_g = zcomp.copy()
+			zcomp_mask_b = zcomp.copy()
 
-			zunique_gon.array = zunique.copy()
-			zunique_gon.save_array(self.experiment.composite_path, self.templates.get(name='source'))
-			zunique_gon.save()
+			# draw regions
+			for region_instance in self.series.region_instances.filter(region_track_instance__t=t):
+				# load mask
+				mask = region_instance.masks.all()[0].load()
+				# get mask outline
+				mask_edge = edge_image(mask)
 
-		return zunique_channel
+				# draw outlines in blue channel
+				zbf_mask_r[mask_edge>0] = 0
+				zbf_mask_g[mask_edge>0] = 0
+				zbf_mask_b[mask_edge>0] = 255
+				zcomp_mask_r[mask_edge>0] = 0
+				zcomp_mask_g[mask_edge>0] = 0
+				zcomp_mask_b[mask_edge>0] = 255
+
+			# tile zbf, zbf_mask, zcomp, zcomp_mask
+			top_half = np.concatenate((np.dstack([zbf, zbf, zbf]), np.dstack([zbf_mask_r, zbf_mask_g, zbf_mask_b])), axis=0)
+			bottom_half = np.concatenate((np.dstack([zmean, zmean, zmean]), np.dstack([zcomp_mask_r, zcomp_mask_g, zcomp_mask_b])), axis=0)
+			whole = np.concatenate((top_half, bottom_half), axis=1)
+
+			imsave(join(tile_path, 'tile_{}_s{}_region-{}_t{}.tiff'.format(self.experiment.name, self.series.name, channel_unique_override, str_value(t, self.series.ts))), whole)
 
 class Template(models.Model):
 	# connections

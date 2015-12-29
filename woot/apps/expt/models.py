@@ -11,6 +11,7 @@ from apps.expt.pipeline import marker_pipeline, region_pipeline
 # util
 import os
 import re
+import datetime as dt
 from scipy.misc import imread, imsave
 import numpy as np
 import subprocess
@@ -280,7 +281,8 @@ class Series(models.Model):
 		# composite for datafile
 		composite = self.composites.get()
 		template = composite.templates.get(name='data')
-		id_token = generate_id_token('img', 'DataFile')
+		# id_token = generate_id_token('img', 'DataFile')
+		id_token = dt.datetime.now().strftime('%Y-%m-%d-%H-%M')
 		data_type = 'output'
 		file_name = template.rv.format(self.experiment.name, self.name, id_token, data_type)
 		url = os.path.join(self.experiment.data_path, file_name)

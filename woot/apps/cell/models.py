@@ -125,7 +125,10 @@ class RegionMask(models.Model):
 
 	# methods
 	def load(self):
-		return self.mask.load()
+		mask = self.mask.load()
+		mask[mask!=self.gray_value_id] = 0
+		mask[mask>0] = 1
+		return mask
 
 ## CELL
 class Cell(models.Model):
