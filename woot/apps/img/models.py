@@ -99,7 +99,7 @@ class Composite(models.Model):
 
 			# outliers
 			Z[Z<0] = 0
-			Z[Z>composite.series.zs-1] = composite.series.zs-1
+			Z[Z>self.series.zs-1] = self.series.zs-1
 
 			# loop over levels
 			for level in range(bf.shape[2]):
