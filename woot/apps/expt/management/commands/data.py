@@ -36,6 +36,13 @@ class Command(BaseCommand):
 			help='Name of the series' # who cares
 		),
 
+		make_option('--region', # option that will appear in cmd
+			action='store', # no idea
+			dest='region', # refer to this in options variable
+			default='', # some default
+			help='Name of the series' # who cares
+		),
+
 	)
 
 	args = ''
@@ -45,6 +52,7 @@ class Command(BaseCommand):
 		# vars
 		experiment_name = options['expt']
 		series_name = options['series']
+		region_ids = options['region']
 
 		if experiment_name!='' and series_name!='':
 			experiment = Experiment.objects.get(name=experiment_name)
@@ -55,9 +63,9 @@ class Command(BaseCommand):
 			composite = series.composites.get()
 
 			# convert track files if necessary
-			for file_name in [f for f in os.listdir(experiment.track_path) if ('.xls' in f and 'region' not in f and 's{}_'.format(series_name) in f)]:
+			for file_name in [f for f in os.listdir(experiment.track_path) if ('.xls' in f and 'region' not in f and '_s{}'.format(series_name) in f)]:
 				name_with_index, ext = splitext(file_name)
-				convert_track_file(experiment.track_path, name_with_index)
+				convert_track_file(composite, experiment.track_path, name_with_index)
 
 			# add all track files to composite
 			data_file_list = [f for f in os.listdir(composite.experiment.track_path) if (os.path.splitext(f)[1] in allowed_data_extensions and composite.experiment.path_matches_series(f, composite.series.name) and 'regions' not in f)]

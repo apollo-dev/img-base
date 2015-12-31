@@ -145,15 +145,15 @@ class Cell(models.Model):
 		previous_mask = None
 		for cell_instance in self.instances.order_by('t'):
 			mask = cell_instance.masks.get(channel__name__contains=unique)
-			if previous_cell_instance is None:
+			if previous_mask is None:
 				mask.vr = 0
 				mask.vc = 0
 				mask.vz = 0
 			else:
 				# velocities
-				mask.vr = mask.Location_Center_Y - previous_cell_instance.Location_Center_Y
-				mask.vc = mask.Location_Center_X - previous_cell_instance.Location_Center_X
-				mask.vz = mask.z - previous_cell_instance.z
+				mask.vr = mask.Location_Center_Y - previous_mask.Location_Center_Y
+				mask.vc = mask.Location_Center_X - previous_mask.Location_Center_X
+				mask.vz = mask.z - previous_mask.z
 
 			mask.save()
 			previous_mask = mask

@@ -143,7 +143,6 @@ class Command(BaseCommand):
 			# 4. Segment zbf channel
 			zbf_channel = composite.channels.get(name='-zbf')
 			unique = zbf_channel.segment_regions(region_marker_channel_name='-zbf')
-			print(unique)
 
 			# 5. re-run cell instance regions if necessary
 			# region_mask_channel = composite.mask_channels.get(name__contains=unique)

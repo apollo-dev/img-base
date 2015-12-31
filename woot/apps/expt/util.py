@@ -4,6 +4,8 @@
 from django.db import models
 
 # util
+import os
+from os.path import exists, join
 import random
 import string
 import re
@@ -72,7 +74,7 @@ def str_value(v, vs):
 	diff = vs_str_len - v_str_len
 	return '{}{}'.format('0'*diff, v)
 
-def convert_track_file(path, name_with_index):
+def convert_track_file(composite, path, name_with_index):
 	# names
 	index_template = r'(?P<name>.+)_n[0-9]+'
 	alt = r'(?P<name>.+)'
@@ -104,4 +106,4 @@ def convert_track_file(path, name_with_index):
 		out_file.write('expt,series,channel,id,t,r,c\n')
 		for track_id, track in tracks.items():
 			for frame in list(sorted(track, key=lambda t: t[2])):
-				out_file.write('{},{},{},{},{},{},{}\n'.format(experiment_name,series_name,'-zcomp',track_id,frame[2],frame[0],frame[1]))
+				out_file.write('{},{},{},{},{},{},{}\n'.format(composite.experiment.name,composite.series.name,'-zcomp',track_id,frame[2],frame[0],frame[1]))
