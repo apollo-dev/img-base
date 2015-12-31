@@ -52,7 +52,9 @@ class Command(BaseCommand):
 		# vars
 		experiment_name = options['expt']
 		series_name = options['series']
-		region_ids = options['region']
+		region_list = options['region'].split(',')
+		if region_list==['']:
+			region_list = []
 
 		if experiment_name!='' and series_name!='':
 			experiment = Experiment.objects.get(name=experiment_name)
@@ -110,10 +112,12 @@ class Command(BaseCommand):
 				mgfp_unique = mgfp_channel.segment()
 
 				# tile
-				composite.create_tile(mgfp_unique, side_channel='-mgfp', main_channel='-mgfp')
+				print('creating tile...')
+				composite.create_tile(mgfp_unique, side_channel='-mgfp', main_channel='-mgfp', region_list=region_list)
 
 				# export
-				composite.series.export_data(mgfp_unique)
+				print('exporting data...')
+				composite.series.export_data(mgfp_unique, region_list=region_list)
 
 			else:
 				# segment
@@ -128,10 +132,12 @@ class Command(BaseCommand):
 				composite.save()
 
 				# tile
-				composite.create_tile(composite.current_zedge_unique)
+				print('creating tile...')
+				composite.create_tile(composite.current_zedge_unique, region_list=region_list)
 
 				# export
-				composite.series.export_data(composite.current_zedge_unique)
+				print('exporting data...')
+				composite.series.export_data(composite.current_zedge_unique, region_list=region_list)
 
 		else:
 			print('Please enter an experiment')

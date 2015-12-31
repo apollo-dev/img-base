@@ -235,7 +235,7 @@ class Composite(models.Model):
 
 		return zunique_channel
 
-	def create_tile(self, channel_unique_override, top_channel='-zbf', side_channel='-zunique', main_channel='-zedge'):
+	def create_tile(self, channel_unique_override, top_channel='-zbf', side_channel='-zunique', main_channel='-zedge', region_list=[]):
 		tile_path = join(self.experiment.video_path, 'tile', self.series.name, channel_unique_override)
 		if not exists(tile_path):
 			os.makedirs(tile_path)
@@ -252,6 +252,11 @@ class Composite(models.Model):
 			zcomp = zcomp_gon.load()
 			zmean = zmean_gon.load()
 			mask = mask_mask.load()
+
+			# remove cells in regions
+			if region_list:
+				for cell_mask in mask_mask.cell_masks.exclude(region__name__in=region_list):
+					mask[mask==cell_mask.gray_value_id] = 0 # delete masks from image if not in regions
 
 			mask_outline = mask_edge_image(mask)
 
@@ -276,27 +281,29 @@ class Composite(models.Model):
 			markers = self.markers.filter(track_instance__t=t, track__cell__isnull=False)
 			for marker in markers:
 				if hasattr(marker.track_instance, 'cell_instance'):
-					# 2. draw markers in blue channel
-					zbf_mask_r[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 0
-					zbf_mask_g[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 0
-					zbf_mask_b[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 255
-					zcomp_mask_r[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 0
-					zcomp_mask_g[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 0
-					zcomp_mask_b[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 255
+					if marker.track_instance.cell_instance.masks.filter(channel__name__contains=channel_unique_override):
+						if marker.track_instance.cell_instance.masks.get(channel__name__contains=channel_unique_override).region.name in region_list or region_list==[]:
+							# 2. draw markers in blue channel
+							zbf_mask_r[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 0
+							zbf_mask_g[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 0
+							zbf_mask_b[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 255
+							zcomp_mask_r[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 0
+							zcomp_mask_g[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 0
+							zcomp_mask_b[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 255
 
-					# 3. draw text in green channel
-					blank_slate = np.zeros(zbf.shape)
-					blank_slate_img = Image.fromarray(blank_slate)
-					draw = ImageDraw.Draw(blank_slate_img)
-					draw.text((marker.c+5, marker.r+5), '{}'.format(marker.track.cell.pk), font=ImageFont.load_default(), fill='rgb(0,0,255)')
-					blank_slate = np.array(blank_slate_img)
+							# 3. draw text in green channel
+							blank_slate = np.zeros(zbf.shape)
+							blank_slate_img = Image.fromarray(blank_slate)
+							draw = ImageDraw.Draw(blank_slate_img)
+							draw.text((marker.c+5, marker.r+5), '{}'.format(marker.track.cell.pk), font=ImageFont.load_default(), fill='rgb(0,0,255)')
+							blank_slate = np.array(blank_slate_img)
 
-					zbf_mask_r[blank_slate>0] = 0
-					zbf_mask_g[blank_slate>0] = 255
-					zbf_mask_b[blank_slate>0] = 0
-					zcomp_mask_r[blank_slate>0] = 0
-					zcomp_mask_g[blank_slate>0] = 255
-					zcomp_mask_b[blank_slate>0] = 0
+							zbf_mask_r[blank_slate>0] = 0
+							zbf_mask_g[blank_slate>0] = 255
+							zbf_mask_b[blank_slate>0] = 0
+							zcomp_mask_r[blank_slate>0] = 0
+							zcomp_mask_g[blank_slate>0] = 255
+							zcomp_mask_b[blank_slate>0] = 0
 
 			# draw regions
 			for region_instance in self.series.region_instances.filter(region_track_instance__t=t):

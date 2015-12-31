@@ -277,7 +277,7 @@ class Series(models.Model):
 		elif d==3:
 			return np.array([self.rmop, self.cmop, self.zmop])
 
-	def export_data(self, unique):
+	def export_data(self, unique, region_list=[]):
 		# composite for datafile
 		composite = self.composites.get()
 		template = composite.templates.get(name='data')
@@ -290,8 +290,11 @@ class Series(models.Model):
 		# datafile
 		data_file = self.data_files.create(experiment=self.experiment, composite=composite, template=template, id_token=id_token, data_type=data_type, url=url, file_name=file_name)
 
-		# populate data
-		data_file.data = [cell_instance.masks.get(channel__name__contains=unique).line() for cell_instance in self.cell_instances.order_by('cell__pk', 't') if cell_instance.masks.filter(channel__name__contains=unique)]
+		# populate date
+		if region_list:
+			data_file.data = [cell_instance.masks.get(channel__name__contains=unique).line() for cell_instance in self.cell_instances.order_by('cell__pk', 't') if (cell_instance.masks.filter(channel__name__contains=unique) and cell_instance.masks.get(channel__name__contains=unique).region.name in region_list)]
+		else:
+			data_file.data = [cell_instance.masks.get(channel__name__contains=unique).line() for cell_instance in self.cell_instances.order_by('cell__pk', 't') if cell_instance.masks.filter(channel__name__contains=unique)]
 		data_file.save_data(headers)
 		data_file.save()
 
