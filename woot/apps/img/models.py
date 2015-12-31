@@ -235,20 +235,22 @@ class Composite(models.Model):
 
 		return zunique_channel
 
-	def create_tile(self, channel_unique_override):
+	def create_tile(self, channel_unique_override, top_channel='-zbf', side_channel='-zunique', main_channel='-zedge'):
 		tile_path = join(self.experiment.video_path, 'tile', self.series.name, channel_unique_override)
 		if not exists(tile_path):
 			os.makedirs(tile_path)
 
 		for t in range(self.series.ts):
-			zbf_gon = self.gons.get(t=t, channel__name='-zbf')
-			zcomp_gon = self.gons.get(t=t, channel__name='-zunique')
-			zmean_gon = self.gons.get(t=t, channel__name='-zedge')
+			zbf_gon = self.gons.get(t=t, channel__name=top_channel)
+			zcomp_gon = self.gons.get(t=t, channel__name=side_channel)
+			zmean_gon = self.gons.get(t=t, channel__name=main_channel)
 			mask_mask = self.masks.get(t=t, channel__name__contains=channel_unique_override)
 
 			zbf = zbf_gon.load()
-			zcomp = zcomp_gon.load()[:,:,0]
-			zmean = zmean_gon.load()[:,:,0]
+			# zcomp = zcomp_gon.load()[:,:,0]
+			# zmean = zmean_gon.load()[:,:,0]
+			zcomp = zcomp_gon.load()
+			zmean = zmean_gon.load()
 			mask = mask_mask.load()
 
 			mask_outline = mask_edge_image(mask)
@@ -297,10 +299,19 @@ class Composite(models.Model):
 					zcomp_mask_b[blank_slate>0] = 0
 
 			# draw regions
-			for region_instance in self.region_instances.filter(region_track_instance__t=t):
+			for region_instance in self.series.region_instances.filter(region_track_instance__t=t):
 				# load mask
-				mask = region_instance.masks.get()
-				# get outline of
+				mask = region_instance.masks.all()[0].load()
+				# get mask outline
+				mask_edge = edge_image(mask)
+
+				# draw outlines in blue channel
+				zbf_mask_r[mask_edge>0] = 0
+				zbf_mask_g[mask_edge>0] = 0
+				zbf_mask_b[mask_edge>0] = 255
+				zcomp_mask_r[mask_edge>0] = 0
+				zcomp_mask_g[mask_edge>0] = 0
+				zcomp_mask_b[mask_edge>0] = 255
 
 			# tile zbf, zbf_mask, zcomp, zcomp_mask
 			top_half = np.concatenate((np.dstack([zbf, zbf, zbf]), np.dstack([zbf_mask_r, zbf_mask_g, zbf_mask_b])), axis=0)

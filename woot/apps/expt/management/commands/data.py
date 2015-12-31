@@ -110,7 +110,7 @@ class Command(BaseCommand):
 				mgfp_unique = mgfp_channel.segment()
 
 				# tile
-				composite.create_tile(mgfp_unique)
+				composite.create_tile(mgfp_unique, side_channel='-mgfp', main_channel='-mgfp')
 
 				# export
 				composite.series.export_data(mgfp_unique)

@@ -291,7 +291,7 @@ class Series(models.Model):
 		data_file = self.data_files.create(experiment=self.experiment, composite=composite, template=template, id_token=id_token, data_type=data_type, url=url, file_name=file_name)
 
 		# populate data
-		data_file.data = [cell_instance.masks.get(channel__name__contains=unique).line() for cell_instance in self.cell_instances.order_by('cell__pk', 't')]
+		data_file.data = [cell_instance.masks.get(channel__name__contains=unique).line() for cell_instance in self.cell_instances.order_by('cell__pk', 't') if cell_instance.masks.filter(channel__name__contains=unique)]
 		data_file.save_data(headers)
 		data_file.save()
 
