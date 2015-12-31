@@ -6,7 +6,7 @@
 import os
 from datetime import timedelta
 from os import mkdir
-from os.path import abspath, basename, dirname, join, normpath, exists
+from os.path import abspath, basename, dirname, join, normpath, exists, expanduser
 from sys import path
 import string
 import json
@@ -31,7 +31,7 @@ SITE_NAME = basename(dirname(DJANGO_ROOT))
 # name in our dotted import paths:
 path.append(DJANGO_ROOT)
 
-desktop_path = join(dirname(dirname(dirname(dirname(dirname(DJANGO_ROOT))))), 'Desktop/img')
+desktop_path = join(expanduser('~'), 'Desktop', 'img')
 transport_path = '/Volumes/transport/data/puzzle/'
 # DATA_ROOT = transport_path if not exists(desktop_path) else desktop_path
 DATA_ROOT = desktop_path if not exists(transport_path) else transport_path
