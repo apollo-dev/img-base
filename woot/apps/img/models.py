@@ -28,6 +28,7 @@ from scipy.ndimage.measurements import label
 from skimage import exposure
 from PIL import Image, ImageDraw, ImageFont
 import matplotlib.pyplot as plt
+import datetime as dt
 
 ### Models
 # http://stackoverflow.com/questions/19695249/load-just-part-of-an-image-in-python
@@ -236,7 +237,7 @@ class Composite(models.Model):
 		return zunique_channel
 
 	def create_tile(self, channel_unique_override, top_channel='-zbf', side_channel='-zunique', main_channel='-zedge', region_list=[]):
-		tile_path = join(self.experiment.video_path, 'tile', self.series.name, channel_unique_override)
+		tile_path = join(self.experiment.video_path, 'tile', self.series.name, '{}-{}'.format(dt.datetime.now().strftime('%Y-%m-%d-%H-%M'), channel_unique_override))
 		if not exists(tile_path):
 			os.makedirs(tile_path)
 
