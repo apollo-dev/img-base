@@ -43,6 +43,13 @@ class Command(BaseCommand):
 			help='Name of the series' # who cares
 		),
 
+		make_option('--threshold', # option that will appear in cmd
+			action='store', # no idea
+			dest='threshold', # refer to this in options variable
+			default='1.2', # some default
+			help='Name of the series' # who cares
+		),
+
 	)
 
 	args = ''
@@ -55,6 +62,7 @@ class Command(BaseCommand):
 		region_list = options['region'].split(',')
 		if region_list==['']:
 			region_list = []
+		threshold_correction_factor = float(options['threshold'])
 
 		if experiment_name!='' and series_name!='':
 			experiment = Experiment.objects.get(name=experiment_name)
@@ -109,7 +117,7 @@ class Command(BaseCommand):
 			if composite.channels.filter(name__contains='mgfp'):
 				# segment using the gfp channels only
 				mgfp_channel = composite.channels.get(name__contains='mgfp')
-				mgfp_unique = mgfp_channel.segment()
+				mgfp_unique = mgfp_channel.segment(threshold_correction_factor=threshold_correction_factor)
 
 				# tile
 				print('creating tile...')
@@ -126,7 +134,7 @@ class Command(BaseCommand):
 
 				zunique_unique = zunique_channel.segment()
 				zedge_channel = composite.create_zedge(channel_unique_override=zunique_unique)
-				zedge_unique = zedge_channel.segment(marker_channel_name='-zcomp', threshold_correction_factor=1.2)
+				zedge_unique = zedge_channel.segment(marker_channel_name='-zcomp', threshold_correction_factor=threshold_correction_factor)
 
 				composite.current_zedge_unique = zedge_unique
 				composite.save()
