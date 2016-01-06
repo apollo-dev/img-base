@@ -184,6 +184,9 @@ class CellInstance(models.Model):
 	vc = models.IntegerField(default=0)
 	vz = models.IntegerField(default=0)
 
+	def __str__(self):
+		return str(self.t)
+
 class CellMask(models.Model):
 	# connections
 	experiment = models.ForeignKey(Experiment, related_name='cell_masks')
