@@ -54,14 +54,15 @@ class Command(BaseCommand):
 			experiment = Experiment.objects.get(name=experiment_name)
 			series = experiment.series.get(name=series_name)
 
-			# cell_instance = series.cell_instances.get(t=43, cell__pk=9) # nice protrusion with visible brightfield
-			cell_instance = series.cell_instances.get(pk=198)
+			cell_instance = series.cell_instances.get(t=48, cell__pk=4)
+			# cell_instance = series.cell_instances.get(t=49, cell__pk=9)
+			# cell_instance = series.cell_instances.get(pk=198)
 
 			# load mask image
 			# 1. for each cell mask, load mask image
 			outlines = {}
 			colours = ['red','green','blue','purple']
-			for i, cell_mask in enumerate(cell_instance.masks.filter(channel__name__contains='zedge')):
+			for i, cell_mask in enumerate(cell_instance.masks.filter(channel__name__contains='zunique')):
 				mask_img = cell_mask.load()
 
 				# get edge

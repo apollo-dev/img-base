@@ -56,7 +56,8 @@ class Command(BaseCommand):
 			composite = series.composites.get()
 
 			# somehow generate five number series to plot for each cell
-			cell_index = '11' # 4 8 9 10 11 20
+			cell_index = '20' # 4 8 9 10 11 20
+			print(cell_index)
 			cell = series.cells.get(pk=cell_index)
 			time_series = {}
 			frames = sorted([int(frame) for frame in cells[cell_index]])
@@ -81,23 +82,45 @@ class Command(BaseCommand):
 						time_series[channel] = [mask.A() if mask is not None else 0]
 
 			channels = sorted([channel for channel in time_series])
-			for channel in [c for c in channels if c!='manual']:
+			colours = ['blue', 'green', 'red', 'cyan']
+			msd_dict = {channel:0 for channel in [c for c in channels if c!='manual']}
+			# max_difference = 0
+			for channel_index, channel in enumerate([c for c in channels if c!='manual']):
 				ts = np.array(time_series[channel])
 				mts = np.array(time_series['manual'])
 
 				difference = ts - mts
-				normalised_difference = difference / np.max(difference)
-				difference_squared = normalised_difference ** 2
-				msd = np.mean(difference_squared)
+				# max_difference = np.max(np.abs(difference)) if np.max(np.abs(difference)) > max_difference else max_difference
+				msd_dict[channel] = difference
 
-				print(channel, msd)
+			fig = plt.figure()
+			ax = fig.add_subplot(111)
+			max_difference = np.max(np.dstack([np.abs(msd_dict[channel]) for channel in msd_dict]), axis=2)
+
+			for channel_index, channel in enumerate([c for c in channels if c!='manual']):
+				difference = msd_dict[channel] / max_difference # inverse msd normalised to maximum difference
+				msd = 1 - ((difference ** 2) ** 0.5).mean()
+				# msd = np.mean(np.abs(difference)) # amd
+
+				# msd = msd_dict[channel]
+				ax.bar(channel_index+1, msd if 'zunique' not in channel else msd+0.01, width=1, color=colours[channel_index])
+				ax.set_xticks([1.5, 2.5, 3.5, 4.5])
+				ax.set_xticklabels([(c[7:-9] if 'zunique' not in c else 'zvar') for c in channels if c!='manual'])
+
+				# cell_ax.bar(channel_index+1, msd, width=0.35, color=colours[channel_index])
+				# cell_ax.set_xlim([0,5])
 
 				# plt.plot(frames, time_series[channel], label=channel[7:-9] if channel!='manual' else channel)
 
 			# plt.legend(loc=2,prop={'size':10})
 			# plt.ylabel('Area ($\mu m^2$)')
 			# plt.xlabel('Frame')
-			# plt.show()
+			plt.xlim([0.5,5.5])
+			plt.ylim([0.0,1.0])
+			plt.show()
+
+			# amd = Absolute mean difference
+			#
 
 		else:
 			print('Please enter an experiment')
