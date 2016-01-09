@@ -114,7 +114,7 @@ class Command(BaseCommand):
 
 					print('step02 | processing marker ({}/{})... {} tracks, {} instances, {} markers'.format(i+1,len(data),composite.tracks.count(), composite.track_instances.count(), composite.markers.count()), end='\n' if i==len(data)-1 else '\r')
 
-			if composite.channels.filter(name__contains='mgfp'):
+			if composite.channels.filter(name__contains='mgfp') and False:
 				# segment using the gfp channels only
 				mgfp_channel = composite.channels.get(name__contains='mgfp')
 				mgfp_unique = mgfp_channel.segment(threshold_correction_factor=threshold_correction_factor)

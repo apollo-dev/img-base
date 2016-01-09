@@ -45,11 +45,11 @@ class Command(BaseCommand):
 			experiment = Experiment.objects.get(name=experiment_name)
 			series = experiment.series.get(name=series_name)
 
-			for cell_pk in [9,10,11,20,21]:
+			for cell_pk in [8,9,10,11,20,21]:
 				cell = series.cells.get(pk=cell_pk)
-				for cell_mask in cell.masks.all():
-					print(cell.pk, cell_mask.cell_instance.track_instance.t, cell_mask.channel)
-					cell_mask.find_protrusions()
+				for i, cell_mask in enumerate(cell.masks.filter(channel__name__contains='mgfp')):
+					status, number_of_protrusions = cell_mask.find_protrusions()
+					print('{}, mask {}/{}, {}, {} protrusions'.format(cell_pk, i+1, cell.masks.filter(channel__name__contains='mgfp').count(), status, number_of_protrusions))
 
 		else:
 			print('Please enter an experiment')

@@ -378,4 +378,4 @@ def roll_edge_v1(points_rc, ball_radius=3):
 
 	anchor_list = anchor_list[::ball_radius]
 
-	return anchor_list
+	return i, len(ball.radius_list())*len(points_rc), anchor_list

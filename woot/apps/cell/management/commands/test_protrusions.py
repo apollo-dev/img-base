@@ -54,7 +54,7 @@ class Command(BaseCommand):
 			experiment = Experiment.objects.get(name=experiment_name)
 			series = experiment.series.get(name=series_name)
 
-			cell_instance = series.cell_instances.get(t=48, cell__pk=4)
+			# cell_instance = series.cell_instances.get(t=48, cell__pk=4)
 			# cell_instance = series.cell_instances.get(t=49, cell__pk=9)
 			# cell_instance = series.cell_instances.get(pk=198)
 

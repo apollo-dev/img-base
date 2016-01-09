@@ -248,10 +248,10 @@ class Composite(models.Model):
 			mask_mask = self.masks.get(t=t, channel__name__contains=channel_unique_override)
 
 			zbf = zbf_gon.load()
-			# zcomp = zcomp_gon.load()[:,:,0]
-			# zmean = zmean_gon.load()[:,:,0]
-			zcomp = zcomp_gon.load()
-			zmean = zmean_gon.load()
+			zcomp = zcomp_gon.load()[:,:,0]
+			zmean = zmean_gon.load()[:,:,0]
+			# zcomp = zcomp_gon.load()
+			# zmean = zmean_gon.load()
 			mask = mask_mask.load()
 
 			# remove cells in regions
@@ -283,7 +283,7 @@ class Composite(models.Model):
 			for marker in markers:
 				if hasattr(marker.track_instance, 'cell_instance'):
 					if marker.track_instance.cell_instance.masks.filter(channel__name__contains=channel_unique_override):
-						if marker.track_instance.cell_instance.masks.get(channel__name__contains=channel_unique_override).region.name in region_list or region_list==[]:
+						if region_list==[] or (marker.track_instance.cell_instance.masks.get(channel__name__contains=channel_unique_override).region is not None and marker.track_instance.cell_instance.masks.get(channel__name__contains=channel_unique_override).region.name in region_list):
 							# 2. draw markers in blue channel
 							zbf_mask_r[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 0
 							zbf_mask_g[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 0
@@ -324,11 +324,12 @@ class Composite(models.Model):
 			# tile zbf, zbf_mask, zcomp, zcomp_mask
 			top_half = np.concatenate((np.dstack([zbf, zbf, zbf]), np.dstack([zbf_mask_r, zbf_mask_g, zbf_mask_b])), axis=0)
 			bottom_half = np.concatenate((np.dstack([zmean, zmean, zmean]), np.dstack([zcomp_mask_r, zcomp_mask_g, zcomp_mask_b])), axis=0)
+			print(top_half.shape, bottom_half.shape)
 			whole = np.concatenate((top_half, bottom_half), axis=1)
 
 			imsave(join(tile_path, 'tile_{}_s{}_marker-{}_t{}.tiff'.format(self.experiment.name, self.series.name, channel_unique_override, str_value(t, self.series.ts))), whole)
 
-	def create_region_tile(self, channel_unique_override):
+	def create_region_tile(self, channel_unique_override, top_channel='-zbf', side_channel='-zunique', main_channel='-zedge'):
 		tile_path = join(self.experiment.video_path, 'regions', self.series.name, channel_unique_override)
 		if not exists(tile_path):
 			os.makedirs(tile_path)

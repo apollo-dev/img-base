@@ -329,55 +329,59 @@ class CellMask(models.Model):
 		points_rc = [list(lm) for lm in list(zip(points_r, points_c))]
 
 		# sort points using a fixed radius
-		print(self.cell_instance.pk, self.pk)
-		sorted_points = roll_edge_v1(points_rc)
+		count, max_count, sorted_points = roll_edge_v1(points_rc)
 
-		# get cell centre and calculate distances of edge points from this point
-		cell_centre = np.array([self.r, self.c])
-		distances = np.array([np.linalg.norm(cell_centre - np.array(p)) for p in sorted_points])
+		if count<max_count:
+			# get cell centre and calculate distances of edge points from this point
+			cell_centre = np.array([self.r, self.c])
+			distances = np.array([np.linalg.norm(cell_centre - np.array(p)) for p in sorted_points])
 
-		# smooth to aid peak finding and shift the points to leave the smallest distance at zero
-		argmin = np.argmin(distances)
-		distances = np.roll(distances, -argmin)
-		distances = gf(distances, sigma=2)
+			# smooth to aid peak finding and shift the points to leave the smallest distance at zero
+			argmin = np.argmin(distances)
+			distances = np.roll(distances, -argmin)
+			distances = gf(distances, sigma=2)
 
-		# find peaks
-		peaks = find_peaks(distances, np.array([9]))
+			# find peaks
+			peaks = find_peaks(distances, np.array([9]))
 
-		# shift peaks back to their original positions
-		true_peaks = np.array(peaks) + argmin
-		true_peaks[true_peaks>=len(sorted_points)] -= len(sorted_points) # rotate
+			# shift peaks back to their original positions
+			true_peaks = np.array(peaks) + argmin
+			true_peaks[true_peaks>=len(sorted_points)] -= len(sorted_points) # rotate
 
-		# find end points
-		protrusion_end_points = [sorted_points[peak] for peak in true_peaks]
+			# find end points
+			protrusion_end_points = [sorted_points[peak] for peak in true_peaks]
 
-		# create new protrusion for each end point
-		for protrusion_end_point in protrusion_end_points:
-			relative_end_point = cell_centre - np.array(protrusion_end_point)
+			# create new protrusion for each end point
+			for protrusion_end_point in protrusion_end_points:
+				relative_end_point = cell_centre - np.array(protrusion_end_point)
 
-			# parameters
-			r = relative_end_point[0]
-			c = relative_end_point[1]
-			length_from_centre = np.linalg.norm(relative_end_point * self.series.scaling()) # in microns
-			length_from_mean = length_from_centre - np.mean(distances)
-			orientation_from_horizontal = math.atan2(relative_end_point[0], relative_end_point[1])
+				# parameters
+				r = relative_end_point[0]
+				c = relative_end_point[1]
+				length_from_centre = np.linalg.norm(relative_end_point * self.series.scaling()) # in microns
+				length_from_mean = length_from_centre - np.mean(distances)
+				orientation_from_horizontal = math.atan2(relative_end_point[0], relative_end_point[1])
 
-			# print(self.cell_instance.pk, self.pk, r, c, length_from_centre, orientation_from_horizontal)
+				# print(self.cell_instance.pk, self.pk, r, c, length_from_centre, orientation_from_horizontal)
 
-			protrusion, protrusion_created = self.protrusions.get_or_create(experiment=self.experiment,
-																																			series=self.series,
-																																			cell=self.cell,
-																																			cell_instance=self.cell_instance,
-																																			channel=self.channel,
-																																			region=self.region,
-																																			region_instance=self.region_instance,
-																																			r=r,
-																																			c=c)
-			if protrusion_created:
-				protrusion.length = length_from_centre
-				protrusion.length_from_mean = length_from_mean
-				protrusion.orientation = orientation_from_horizontal
-				protrusion.save()
+				protrusion, protrusion_created = self.protrusions.get_or_create(experiment=self.experiment,
+																																				series=self.series,
+																																				cell=self.cell,
+																																				cell_instance=self.cell_instance,
+																																				channel=self.channel,
+																																				region=self.region,
+																																				region_instance=self.region_instance,
+																																				r=r,
+																																				c=c)
+				if protrusion_created:
+					protrusion.length = length_from_centre
+					protrusion.length_from_mean = length_from_mean
+					protrusion.orientation = orientation_from_horizontal
+					protrusion.save()
+
+			return 'success', len(protrusion_end_points)
+		else:
+			return 'success', 0
 
 class Protrusion(models.Model):
 	# connections
