@@ -1,10 +1,13 @@
-# expt.command: data
+# expt.command: paths
 
 # django
 from django.core.management.base import BaseCommand, CommandError
-from django.conf import settings
+
+# local
+
 
 # util
+
 
 spacer = ' ' *	20
 
@@ -18,4 +21,4 @@ class Command(BaseCommand):
 	help = ''
 
 	def handle(self, *args, **options):
-		print('DATA ROOT: {}'.format(settings.DATA_ROOT))
+		pass

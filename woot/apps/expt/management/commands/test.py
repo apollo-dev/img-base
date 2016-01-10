@@ -1,4 +1,4 @@
-# expt.command: list
+# expt.command:
 
 # django
 from django.core.management.base import BaseCommand, CommandError
