@@ -16,7 +16,6 @@ spacer = ' ' *	20
 ### Command
 class Command(BaseCommand):
 	option_list = BaseCommand.option_list + (
-
 		make_option('--expt', # option that will appear in cmd
 			action='store', # no idea
 			dest='expt', # refer to this in options variable
@@ -30,7 +29,6 @@ class Command(BaseCommand):
 			default='15', # some default
 			help='Name of the series' # who cares
 		),
-
 	)
 
 	args = ''
@@ -45,11 +43,11 @@ class Command(BaseCommand):
 			experiment = Experiment.objects.get(name=experiment_name)
 			series = experiment.series.get(name=series_name)
 
-			for cell_pk in [8,9,10,11,20,21]:
+			for cell_pk in [4,9]:
 				cell = series.cells.get(pk=cell_pk)
-				for i, cell_mask in enumerate(cell.masks.filter(channel__name__contains='mgfp')):
+				for i, cell_mask in enumerate(cell.masks.filter(channel__name__contains='bmod')):
 					status, number_of_protrusions = cell_mask.find_protrusions()
-					print('{}, mask {}/{}, {}, {} protrusions'.format(cell_pk, i+1, cell.masks.filter(channel__name__contains='mgfp').count(), status, number_of_protrusions))
+					print('{}, mask {}/{}, {}, {} protrusions'.format(cell_pk, i+1, cell.masks.filter(channel__name__contains='bmod').count(), status, number_of_protrusions))
 
 		else:
 			print('Please enter an experiment')
