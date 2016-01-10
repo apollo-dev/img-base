@@ -28,6 +28,7 @@ from scipy.ndimage.measurements import label
 from skimage import exposure
 from PIL import Image, ImageDraw, ImageFont
 import matplotlib.pyplot as plt
+import datetime as dt
 
 ### Models
 # http://stackoverflow.com/questions/19695249/load-just-part-of-an-image-in-python
@@ -99,7 +100,7 @@ class Composite(models.Model):
 
 			# outliers
 			Z[Z<0] = 0
-			Z[Z>composite.series.zs-1] = composite.series.zs-1
+			Z[Z>self.series.zs-1] = self.series.zs-1
 
 			# loop over levels
 			for level in range(bf.shape[2]):
@@ -210,73 +211,6 @@ class Composite(models.Model):
 
 		return zedge_channel
 
-	def create_tile(self, channel_unique_override):
-		tile_path = join(self.experiment.video_path, 'tile', self.series.name, channel_unique_override)
-		if not exists(tile_path):
-			os.makedirs(tile_path)
-
-		for t in range(self.series.ts):
-			zbf_gon = self.gons.get(t=t, channel__name='-zbf')
-			zcomp_gon = self.gons.get(t=t, channel__name='-zunique')
-			zmean_gon = self.gons.get(t=t, channel__name='-zedge')
-			mask_mask = self.masks.get(t=t, channel__name__contains=channel_unique_override)
-
-			zbf = zbf_gon.load()
-			zcomp = zcomp_gon.load()
-			zmean = zmean_gon.load()
-			mask = mask_mask.load()
-
-			mask_outline = mask_edge_image(mask)
-
-			zbf_mask_r = zbf.copy()
-			zbf_mask_g = zbf.copy()
-			zbf_mask_b = zbf.copy()
-
-			zcomp_mask_r = zcomp.copy()
-			zcomp_mask_g = zcomp.copy()
-			zcomp_mask_b = zcomp.copy()
-
-			# drawing
-			# 1. draw outlines in red channel
-			zbf_mask_r[mask_outline>0] = 255
-			zbf_mask_g[mask_outline>0] = 0
-			zbf_mask_b[mask_outline>0] = 0
-			zcomp_mask_r[mask_outline>0] = 255
-			zcomp_mask_g[mask_outline>0] = 0
-			zcomp_mask_b[mask_outline>0] = 0
-
-			markers = self.markers.filter(track_instance__t=t, track__cell__isnull=False)
-			for marker in markers:
-				if hasattr(marker.track_instance, 'cell_instance'):
-					# 2. draw markers in blue channel
-					zbf_mask_r[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 0
-					zbf_mask_g[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 0
-					zbf_mask_b[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 255
-					zcomp_mask_r[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 0
-					zcomp_mask_g[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 0
-					zcomp_mask_b[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 255
-
-					# 3. draw text in green channel
-					blank_slate = np.zeros(zbf.shape)
-					blank_slate_img = Image.fromarray(blank_slate)
-					draw = ImageDraw.Draw(blank_slate_img)
-					draw.text((marker.c+5, marker.r+5), '{}'.format(marker.track.cell.pk), font=ImageFont.load_default(), fill='rgb(0,0,255)')
-					blank_slate = np.array(blank_slate_img)
-
-					zbf_mask_r[blank_slate>0] = 0
-					zbf_mask_g[blank_slate>0] = 255
-					zbf_mask_b[blank_slate>0] = 0
-					zcomp_mask_r[blank_slate>0] = 0
-					zcomp_mask_g[blank_slate>0] = 255
-					zcomp_mask_b[blank_slate>0] = 0
-
-			# tile zbf, zbf_mask, zcomp, zcomp_mask
-			top_half = np.concatenate((np.dstack([zbf, zbf, zbf]), np.dstack([zbf_mask_r, zbf_mask_g, zbf_mask_b])), axis=0)
-			bottom_half = np.concatenate((np.dstack([zmean, zmean, zmean]), np.dstack([zcomp_mask_r, zcomp_mask_g, zcomp_mask_b])), axis=0)
-			whole = np.concatenate((top_half, bottom_half), axis=1)
-
-			imsave(join(tile_path, 'tile_{}_s{}_marker-{}_t{}.tiff'.format(self.experiment.name, self.series.name, channel_unique_override, str_value(t, self.series.ts))), whole)
-
 	def create_zunique(self):
 
 		zunique_channel, zunique_channel_created = self.channels.get_or_create(name='-zunique')
@@ -301,6 +235,143 @@ class Composite(models.Model):
 			zunique_gon.save()
 
 		return zunique_channel
+
+	def create_tile(self, channel_unique_override, top_channel='-zbf', side_channel='-zunique', main_channel='-zedge', region_list=[]):
+		tile_path = join(self.experiment.video_path, 'tile', self.series.name, '{}-{}'.format(dt.datetime.now().strftime('%Y-%m-%d-%H-%M'), channel_unique_override))
+		if not exists(tile_path):
+			os.makedirs(tile_path)
+
+		for t in range(self.series.ts):
+			zbf_gon = self.gons.get(t=t, channel__name=top_channel)
+			zcomp_gon = self.gons.get(t=t, channel__name=side_channel)
+			zmean_gon = self.gons.get(t=t, channel__name=main_channel)
+			mask_mask = self.masks.get(t=t, channel__name__contains=channel_unique_override)
+
+			zbf = zbf_gon.load()
+			zcomp = zcomp_gon.load()[:,:,0]
+			zmean = zmean_gon.load()[:,:,0]
+			# zcomp = zcomp_gon.load()
+			# zmean = zmean_gon.load()
+			mask = mask_mask.load()
+
+			# remove cells in regions
+			if region_list:
+				for cell_mask in mask_mask.cell_masks.exclude(region__name__in=region_list):
+					mask[mask==cell_mask.gray_value_id] = 0 # delete masks from image if not in regions
+
+			mask_outline = mask_edge_image(mask)
+
+			zbf_mask_r = zbf.copy()
+			zbf_mask_g = zbf.copy()
+			zbf_mask_b = zbf.copy()
+
+			zcomp_mask_r = zcomp.copy()
+			zcomp_mask_g = zcomp.copy()
+			zcomp_mask_b = zcomp.copy()
+
+			# drawing
+			# 1. draw outlines in red channel
+			zbf_mask_r[mask_outline>0] = 255
+			zbf_mask_g[mask_outline>0] = 0
+			zbf_mask_b[mask_outline>0] = 0
+			zcomp_mask_r[mask_outline>0] = 255
+			zcomp_mask_g[mask_outline>0] = 0
+			zcomp_mask_b[mask_outline>0] = 0
+
+			# draw markers
+			markers = self.markers.filter(track_instance__t=t, track__cell__isnull=False)
+			for marker in markers:
+				if hasattr(marker.track_instance, 'cell_instance'):
+					if marker.track_instance.cell_instance.masks.filter(channel__name__contains=channel_unique_override):
+						if region_list==[] or (marker.track_instance.cell_instance.masks.get(channel__name__contains=channel_unique_override).region is not None and marker.track_instance.cell_instance.masks.get(channel__name__contains=channel_unique_override).region.name in region_list):
+							# 2. draw markers in blue channel
+							zbf_mask_r[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 0
+							zbf_mask_g[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 0
+							zbf_mask_b[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 255
+							zcomp_mask_r[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 0
+							zcomp_mask_g[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 0
+							zcomp_mask_b[marker.r-2:marker.r+3,marker.c-2:marker.c+3] = 255
+
+							# 3. draw text in green channel
+							blank_slate = np.zeros(zbf.shape)
+							blank_slate_img = Image.fromarray(blank_slate)
+							draw = ImageDraw.Draw(blank_slate_img)
+							draw.text((marker.c+5, marker.r+5), '{}'.format(marker.track.cell.pk), font=ImageFont.load_default(), fill='rgb(0,0,255)')
+							blank_slate = np.array(blank_slate_img)
+
+							zbf_mask_r[blank_slate>0] = 0
+							zbf_mask_g[blank_slate>0] = 255
+							zbf_mask_b[blank_slate>0] = 0
+							zcomp_mask_r[blank_slate>0] = 0
+							zcomp_mask_g[blank_slate>0] = 255
+							zcomp_mask_b[blank_slate>0] = 0
+
+			# draw regions
+			for region_instance in self.series.region_instances.filter(region_track_instance__t=t):
+				# load mask
+				mask = region_instance.masks.all()[0].load()
+				# get mask outline
+				mask_edge = edge_image(mask)
+
+				# draw outlines in blue channel
+				zbf_mask_r[mask_edge>0] = 0
+				zbf_mask_g[mask_edge>0] = 0
+				zbf_mask_b[mask_edge>0] = 255
+				zcomp_mask_r[mask_edge>0] = 0
+				zcomp_mask_g[mask_edge>0] = 0
+				zcomp_mask_b[mask_edge>0] = 255
+
+			# tile zbf, zbf_mask, zcomp, zcomp_mask
+			top_half = np.concatenate((np.dstack([zbf, zbf, zbf]), np.dstack([zbf_mask_r, zbf_mask_g, zbf_mask_b])), axis=0)
+			bottom_half = np.concatenate((np.dstack([zmean, zmean, zmean]), np.dstack([zcomp_mask_r, zcomp_mask_g, zcomp_mask_b])), axis=0)
+			print(top_half.shape, bottom_half.shape)
+			whole = np.concatenate((top_half, bottom_half), axis=1)
+
+			imsave(join(tile_path, 'tile_{}_s{}_marker-{}_t{}.tiff'.format(self.experiment.name, self.series.name, channel_unique_override, str_value(t, self.series.ts))), whole)
+
+	def create_region_tile(self, channel_unique_override, top_channel='-zbf', side_channel='-zunique', main_channel='-zedge'):
+		tile_path = join(self.experiment.video_path, 'regions', self.series.name, channel_unique_override)
+		if not exists(tile_path):
+			os.makedirs(tile_path)
+
+		for t in range(self.series.ts):
+			zbf_gon = self.gons.get(t=t, channel__name='-zbf')
+			zcomp_gon = self.gons.get(t=t, channel__name='-zunique')
+			zmean_gon = self.gons.get(t=t, channel__name='-mgfp')
+
+			zbf = zbf_gon.load()
+			zcomp = zcomp_gon.load()
+			zmean = zmean_gon.load()
+
+			zbf_mask_r = zbf.copy()
+			zbf_mask_g = zbf.copy()
+			zbf_mask_b = zbf.copy()
+
+			zcomp_mask_r = zcomp.copy()
+			zcomp_mask_g = zcomp.copy()
+			zcomp_mask_b = zcomp.copy()
+
+			# draw regions
+			for region_instance in self.series.region_instances.filter(region_track_instance__t=t):
+				# load mask
+				mask = region_instance.masks.all()[0].load()
+				# get mask outline
+				mask_edge = edge_image(mask)
+
+				# draw outlines in blue channel
+				zbf_mask_r[mask_edge>0] = 0
+				zbf_mask_g[mask_edge>0] = 0
+				zbf_mask_b[mask_edge>0] = 255
+				zcomp_mask_r[mask_edge>0] = 0
+				zcomp_mask_g[mask_edge>0] = 0
+				zcomp_mask_b[mask_edge>0] = 255
+
+			# tile zbf, zbf_mask, zcomp, zcomp_mask
+			top_half = np.concatenate((np.dstack([zbf, zbf, zbf]), np.dstack([zbf_mask_r, zbf_mask_g, zbf_mask_b])), axis=0)
+			bottom_half = np.concatenate((np.dstack([zmean, zmean, zmean]), np.dstack([zcomp_mask_r, zcomp_mask_g, zcomp_mask_b])), axis=0)
+			whole = np.concatenate((top_half, bottom_half), axis=1)
+
+			imsave(join(tile_path, 'tile_{}_s{}_region-{}_t{}.tiff'.format(self.experiment.name, self.series.name, channel_unique_override, str_value(t, self.series.ts))), whole)
 
 class Template(models.Model):
 	# connections
@@ -397,7 +468,8 @@ class Channel(models.Model):
 				# 2. create cell instance
 				cell_instance, cell_instance_created = cell.instances.get_or_create(experiment=cell.experiment,
 																																						series=cell.series,
-																																						track_instance=marker.track_instance)
+																																						track_instance=marker.track_instance,
+																																						t=marker.track_instance.t)
 
 				# 3. create cell mask
 				gray_value_id = mask[marker.r, marker.c]
@@ -453,7 +525,7 @@ class Channel(models.Model):
 		# 6. calculate cell velocities
 		print('calculating velocities...')
 		for cell in self.composite.experiment.cells.all():
-			cell.calculate_velocities()
+			cell.calculate_velocities(unique)
 			cell.calculate_confidences()
 
 		return unique

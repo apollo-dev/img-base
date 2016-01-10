@@ -43,6 +43,12 @@ class Command(BaseCommand):
 			help='Name of the .lif archive' # who cares
 		),
 
+		make_option('--gfp', # option that will appear in cmd
+			action='store_true', # no idea
+			dest='use_gfp', # refer to this in options variable
+			default=False, # some default
+		),
+
 	)
 
 	args = ''
@@ -143,17 +149,20 @@ class Command(BaseCommand):
 			else:
 				print('step01 | zmod already exists...')
 
-			# 7. make bmod channels
-			if composite.channels.filter(name='-bmod').count()==0:
-				composite.create_selinummi()
-			else:
-				print('step01 | bmod already exists...')
+			# 7. put tracking files in ij folder
+			if not exists(join(composite.experiment.ij_path, composite.series.name)):
+				os.mkdir(join(composite.experiment.ij_path, composite.series.name))
 
-			# 8. make max gfp channels
-			if composite.channels.filter(name='-mgfp').count()==0:
-				composite.create_max_gfp()
-			else:
-				print('step01 | mgfp already exists...')
+			for gon in composite.gons.filter(channel__name='-zcomp'):
+				sh.copy2(gon.paths.get().url, join(composite.experiment.ij_path, composite.series.name, gon.paths.get().file_name))
+
+			# 8. make gfp channels if requested
+			if options['use_gfp']:
+				# 8. make max gfp channels
+				if composite.channels.filter(name='-mgfp').count()==0:
+					composite.create_max_gfp()
+				else:
+					print('step01 | mgfp already exists...')
 
 		else:
 			print('Please enter an experiment')
