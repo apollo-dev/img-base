@@ -106,4 +106,4 @@ def convert_track_file(composite, path, name_with_index):
 		out_file.write('expt,series,channel,id,t,r,c\n')
 		for track_id, track in tracks.items():
 			for frame in list(sorted(track, key=lambda t: t[2])):
-				out_file.write('{},{},{},{},{},{},{}\n'.format(composite.experiment.name,composite.series.name,'-zcomp',track_id,frame[2],frame[0],frame[1]))
+				out_file.write('{},{},{},{},{},{},{}\n'.format(composite.experiment.name,composite.series.name,'-zunique',track_id,frame[2],frame[0],frame[1]))

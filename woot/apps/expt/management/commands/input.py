@@ -141,11 +141,11 @@ class Command(BaseCommand):
 			# 5. composite
 			print('step01 | creating composite for experiment {} series {}'.format(experiment_name, series_name))
 			composite = series.compose()
+			composite.create_zunique()
 
 			# 6. make zmod channels
 			if composite.channels.filter(name='-zmod').count()==0:
 				composite.create_zmod()
-				composite.create_zunique()
 			else:
 				print('step01 | zmod already exists...')
 

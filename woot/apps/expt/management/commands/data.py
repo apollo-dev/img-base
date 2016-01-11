@@ -90,33 +90,34 @@ class Command(BaseCommand):
 				print('step02 | data file {}... {}'.format(df_name, status))
 
 			for data_file in composite.data_files.filter(data_type='markers'):
-				data = data_file.load()
-				for i, marker_prototype in enumerate(data):
-					track, track_created = composite.tracks.get_or_create(experiment=composite.experiment,
-																																series=composite.series,
-																																composite=composite,
-																																channel=composite.channels.get(name=marker_prototype['channel']),
-																																track_id=marker_prototype['id'])
+				if exists(data_file.url):
+					data = data_file.load()
+					for i, marker_prototype in enumerate(data):
+						track, track_created = composite.tracks.get_or_create(experiment=composite.experiment,
+																																	series=composite.series,
+																																	composite=composite,
+																																	channel=composite.channels.get(name=marker_prototype['channel']),
+																																	track_id=marker_prototype['id'])
 
-					track_instance, track_instance_created = track.instances.get_or_create(experiment=composite.experiment,
-																																								 series=composite.series,
-																																								 composite=composite,
-																																								 channel=composite.channels.get(name=marker_prototype['channel']),
-																																								 t=int(marker_prototype['t']))
+						track_instance, track_instance_created = track.instances.get_or_create(experiment=composite.experiment,
+																																									 series=composite.series,
+																																									 composite=composite,
+																																									 channel=composite.channels.get(name=marker_prototype['channel']),
+																																									 t=int(marker_prototype['t']))
 
-					marker, marker_created = track_instance.markers.get_or_create(experiment=composite.experiment,
-																																				series=composite.series,
-																																				composite=composite,
-																																				channel=composite.channels.get(name=marker_prototype['channel']),
-																																				track=track,
-																																				r=int(marker_prototype['r']),
-																																				c=int(marker_prototype['c']))
+						marker, marker_created = track_instance.markers.get_or_create(experiment=composite.experiment,
+																																					series=composite.series,
+																																					composite=composite,
+																																					channel=composite.channels.get(name=marker_prototype['channel']),
+																																					track=track,
+																																					r=int(marker_prototype['r']),
+																																					c=int(marker_prototype['c']))
 
-					print('step02 | processing marker ({}/{})... {} tracks, {} instances, {} markers'.format(i+1,len(data),composite.tracks.count(), composite.track_instances.count(), composite.markers.count()), end='\n' if i==len(data)-1 else '\r')
+						print('step02 | processing marker ({}/{})... {} tracks, {} instances, {} markers'.format(i+1,len(data),composite.tracks.count(), composite.track_instances.count(), composite.markers.count()), end='\n' if i==len(data)-1 else '\r')
 
-			if composite.channels.filter(name__contains='mgfp') and False:
+			if composite.channels.filter(name='-mgfp'):
 				# segment using the gfp channels only
-				mgfp_channel = composite.channels.get(name__contains='mgfp')
+				mgfp_channel = composite.channels.get(name='-mgfp')
 				mgfp_unique = mgfp_channel.segment(threshold_correction_factor=threshold_correction_factor)
 
 				# tile
