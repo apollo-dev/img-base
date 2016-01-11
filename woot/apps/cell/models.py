@@ -145,6 +145,8 @@ class Cell(models.Model):
 		previous_mask = None
 		for cell_instance in self.instances.order_by('t'):
 			if cell_instance.masks.filter(channel__name__contains=unique):
+				print(unique)
+				print(self.series.composites.get().mask_channels.all())
 				mask = cell_instance.masks.get(channel__name__contains=unique)
 				if previous_mask is None:
 					mask.vr = 0
