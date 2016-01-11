@@ -57,7 +57,7 @@ class Command(BaseCommand):
 				cell_instance = series.cell_instances.get(cell__pk=cell_id, t=int(frame)-1)
 
 				protrusion_prototypes = protrusions[cell_id][frame]
-				for prototype in protrusion_prototypes[:1]: # SET PROTRUSION
+				for prototype in protrusion_prototypes[1:]: # SET PROTRUSION
 
 					# get true orientation and length from manual ground truth
 					orientation = (180 - prototype[1]) / 180 * math.pi
@@ -77,26 +77,33 @@ class Command(BaseCommand):
 							else:
 								protrusion_dict[protrusion_match.channel.name] = [(int(frame)-1, (protrusion_match.length, protrusion_match.orientation))]
 
-			for channel_name in protrusion_dict:
-				tokens = sorted(protrusion_dict[channel_name], key=lambda t: t[0])
-				frames = [token[0] for token in tokens]
-				lengths = [token[1][0] for token in tokens]
-
-				lengths = np.array(lengths) / np.max(lengths)
-
-				orientations = [token[1][1] for token in tokens]
-
-				plt.plot(frames, lengths, label=channel_name)
-
+			# manual data
 			manual_tokens = sorted(manual, key=lambda t: t[0])
 			manual_frames = [token[0] for token in manual_tokens]
 			manual_lengths = [token[1][0] for token in manual_tokens]
 
-			manual_lengths = np.array(manual_lengths) / np.max(manual_lengths)
+			manual_lengths = np.array(manual_lengths)
 
 			manual_orientations = [token[1][1] for token in manual_tokens]
 
 			plt.plot(manual_frames, manual_lengths, label='manual')
+
+			# channel data
+			channel_dict = {}
+			max_difference = 0
+			for channel_name in protrusion_dict:
+				tokens = sorted(protrusion_dict[channel_name], key=lambda t: t[0])
+				frames = [token[0] for token in tokens]
+				lengths = [token[1][0] for token in tokens]
+				orientations = [token[1][1] for token in tokens]
+				channel_dict[channel_name] = {'lengths':np.array(lengths), 'frames':np.array(frames), 'orientations':np.array(orientations)}
+
+			for channel_name in channel_dict:
+				frames = channel_dict[channel_name]['frames']
+				lengths = channel_dict[channel_name]['lengths']
+				orientations = channel_dict[channel_name]['lengths']
+
+				plt.plot(frames, lengths, label=channel_name)
 
 			plt.legend()
 			plt.show()

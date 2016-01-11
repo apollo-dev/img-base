@@ -49,6 +49,31 @@ class Command(BaseCommand):
 			default=False, # some default
 		),
 
+		make_option('--r', # option that will appear in cmd
+			action='store', # no idea
+			dest='r', # refer to this in options variable
+			default=5, # some default
+		),
+
+		make_option('--sigma', # option that will appear in cmd
+			action='store', # no idea
+			dest='sigma', # refer to this in options variable
+			default=5, # some default
+		),
+
+		make_option('--dz', # option that will appear in cmd
+			action='store', # no idea
+			dest='dz', # refer to this in options variable
+			default=-8, # some default
+		),
+
+		make_option('--region', # option that will appear in cmd
+			action='store', # no idea
+			dest='region', # refer to this in options variable
+			default='', # some default
+			help='Name of the series' # who cares
+		),
+
 	)
 
 	args = ''
@@ -60,6 +85,12 @@ class Command(BaseCommand):
 		experiment_name = options['expt']
 		series_name = options['series']
 		lif_name = options['lif']
+		R = int(options['r'])
+		sigma = int(options['sigma'])
+		dz = int(options['dz'])
+		region_list = options['region'].split(',')
+		if region_list==['']:
+			region_list = []
 		data_root = settings.DATA_ROOT
 		lif_root = settings.LIF_ROOT
 		bfconvert = join(data_root, 'bftools', 'bfconvert')
@@ -145,7 +176,7 @@ class Command(BaseCommand):
 
 			# 6. make zmod channels
 			if composite.channels.filter(name='-zmod').count()==0:
-				composite.create_zmod()
+				composite.create_zmod(R=R, delta_z=dz, sigma=sigma)
 			else:
 				print('step01 | zmod already exists...')
 
