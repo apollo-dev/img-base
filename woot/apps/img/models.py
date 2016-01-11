@@ -236,6 +236,31 @@ class Composite(models.Model):
 
 		return zunique_channel
 
+	def create_tracking(self):
+
+		tracking_channel, tracking_channel_created = self.channels.get_or_create(name='-tracking')
+
+		if not exists(join(self.experiment.ij_path, self.series.name)):
+			os.mkdir(join(self.experiment.ij_path, self.series.name))
+
+		for t in range(self.series.ts):
+			print('creating tracking t{}/{}'.format(t+1, self.series.ts), end='\r' if t<self.series.ts-1 else '\n')
+
+			zbf = exposure.rescale_intensity(self.gons.get(channel__name='-zbf', t=t).load() * 1.0)
+			gfp = exposure.rescale_intensity(self.gons.get(channel__name='0', t=t).load() * 1.0)
+
+			gfp_projection = np.max(gfp, axis=2) # z projection of the gfp
+
+			tracking_img = gfp_projection + zbf
+
+			tracking_gon, tracking_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=tracking_channel, t=t)
+			tracking_gon.set_origin(0,0,0,t)
+			tracking_gon.set_extent(self.series.rs, self.series.cs, 1)
+
+			tracking_gon.array = tracking_img.copy()
+			tracking_gon.save_array(join(self.experiment.ij_path, self.series.name), self.templates.get(name='source'))
+			tracking_gon.save()
+
 	def create_tile(self, channel_unique_override, top_channel='-zbf', side_channel='-zunique', main_channel='-zedge', region_list=[]):
 		tile_path = join(self.experiment.video_path, 'tile', self.series.name, '{}-{}'.format(dt.datetime.now().strftime('%Y-%m-%d-%H-%M'), channel_unique_override))
 		if not exists(tile_path):
