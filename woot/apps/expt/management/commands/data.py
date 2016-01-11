@@ -135,7 +135,7 @@ class Command(BaseCommand):
 
 				zunique_unique = zunique_channel.segment()
 				zedge_channel = composite.create_zedge(channel_unique_override=zunique_unique)
-				zedge_unique = zedge_channel.segment(marker_channel_name='-zcomp', threshold_correction_factor=threshold_correction_factor)
+				zedge_unique = zedge_channel.segment(marker_channel_name='-zunique', threshold_correction_factor=threshold_correction_factor)
 
 				composite.current_zedge_unique = zedge_unique
 				composite.save()

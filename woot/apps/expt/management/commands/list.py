@@ -21,11 +21,10 @@ class Command(BaseCommand):
 	help = ''
 
 	def handle(self, *args, **options):
-		for experiment in Experiment.objects.all():
-			print('mask_channels')
-			for mask_channel in experiment.composites.get().mask_channels.all():
-				print(mask_channel)
+		experiment = Experiment.objects.get()
 
-			print('channels')
-			for channel in experiment.composites.get().channels.all():
-				print(channel)
+		composite = experiment.composites.get()
+
+		print(experiment.cells.count())
+		for cell in experiment.cells.all():
+			print(cell.cell_instances.count())
