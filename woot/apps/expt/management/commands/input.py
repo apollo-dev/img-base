@@ -172,20 +172,16 @@ class Command(BaseCommand):
 			# 5. composite
 			print('step01 | creating composite for experiment {} series {}'.format(experiment_name, series_name))
 			composite = series.compose()
-			composite.create_zunique()
 
 			# 6. make zmod channels
+			composite = Composite.objects.get(series__name='7')
 			if composite.channels.filter(name='-zmod').count()==0:
 				composite.create_zmod(R=R, delta_z=dz, sigma=sigma)
 			else:
 				print('step01 | zmod already exists...')
 
-			# 7. put tracking files in ij folder
-			if not exists(join(composite.experiment.ij_path, composite.series.name)):
-				os.mkdir(join(composite.experiment.ij_path, composite.series.name))
-
-			for gon in composite.gons.filter(channel__name='-zcomp'):
-				sh.copy2(gon.paths.get().url, join(composite.experiment.ij_path, composite.series.name, gon.paths.get().file_name))
+			composite.create_zunique()
+			composite.create_tracking()
 
 			# 8. make gfp channels if requested
 			if options['use_gfp']:

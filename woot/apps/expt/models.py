@@ -292,9 +292,9 @@ class Series(models.Model):
 
 		# populate date
 		if region_list:
-			data_file.data = [cell_instance.masks.get(channel__name__contains=unique).line() for cell_instance in self.cell_instances.order_by('cell__pk', 't') if (cell_instance.masks.filter(channel__name__contains=unique) and cell_instance.masks.get(channel__name__contains=unique).region.name in region_list)]
+			data_file.data = [cell_instance.masks.filter(channel__name__contains=unique)[0].line() for cell_instance in self.cell_instances.order_by('cell__pk', 't') if (cell_instance.masks.filter(channel__name__contains=unique) and cell_instance.masks.get(channel__name__contains=unique).region.name in region_list)]
 		else:
-			data_file.data = [cell_instance.masks.get(channel__name__contains=unique).line() for cell_instance in self.cell_instances.order_by('cell__pk', 't') if cell_instance.masks.filter(channel__name__contains=unique)]
+			data_file.data = [cell_instance.masks.filter(channel__name__contains=unique)[0].line() for cell_instance in self.cell_instances.order_by('cell__pk', 't') if cell_instance.masks.filter(channel__name__contains=unique)]
 		data_file.save_data(headers)
 		data_file.save()
 
