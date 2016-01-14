@@ -17,6 +17,7 @@ from subprocess import call
 import shutil as sh
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 
 spacer = ' ' *	20
 
@@ -73,7 +74,12 @@ class Command(BaseCommand):
 				# print(frame)
 				cell_instance = cell.instances.get(track_instance__t=frame)
 
-				for channel in ['-zcomp-zunique-ELNLB56W', '-zcomp-zedge-X8CLLKUK', '-zcomp-mgfp-OY0UB7OQ', '-zcomp-bmod-JHL4ZKB0']:
+				# mask CJYLE0RA > -zcomp-zunique-827TIRVT
+				# mask CJYLE0RA > -zcomp-zedge-5BP2CN3L
+				# mask CJYLE0RA > -zcomp-mgfp-WGF9KQWY
+				# mask CJYLE0RA > -zcomp-bmod-WIO67XY9
+
+				for channel in ['-zcomp-zunique-827TIRVT', '-zcomp-zedge-5BP2CN3L', '-zcomp-mgfp-WGF9KQWY', '-zcomp-bmod-WIO67XY9']:
 					mask = cell_instance.masks.get(channel__name=channel) if cell_instance.masks.filter(channel__name=channel) else None
 
 					if channel in time_series:
@@ -97,30 +103,99 @@ class Command(BaseCommand):
 			ax = fig.add_subplot(111)
 			max_difference = np.max(np.dstack([np.abs(msd_dict[channel]) for channel in msd_dict]), axis=2)
 
-			for channel_index, channel in enumerate([c for c in channels if c!='manual']):
-				difference = msd_dict[channel] / max_difference # inverse msd normalised to maximum difference
-				msd = 1 - ((difference ** 2) ** 0.5).mean()
-				# msd = np.mean(np.abs(difference)) # amd
+			#
+			# for channel_index, channel in enumerate(['-zcomp-bmod-WIO67XY9', '-zcomp-mgfp-WGF9KQWY', '-zcomp-zedge-5BP2CN3L', '-zcomp-zunique-827TIRVT']):
+			# 	print(channel_index, channel)
+			# 	difference = msd_dict[channel] / max_difference # inverse msd normalised to maximum difference
+			# 	msd = 1 - ((difference ** 2) ** 0.5).mean()
+			# 	# msd = np.mean(np.abs(difference)) # amd
+			#
+			# 	# msd = msd_dict[channel]
+			# 	ax.bar(channel_index+1, msd if 'zunique' not in channel else msd+0.01, width=1, color=colours[channel_index])
 
-				# msd = msd_dict[channel]
-				ax.bar(channel_index+1, msd if 'zunique' not in channel else msd+0.01, width=1, color=colours[channel_index])
-				ax.set_xticks([1.5, 2.5, 3.5, 4.5])
-				ax.set_xticklabels([(c[7:-9] if 'zunique' not in c else 'zvar') for c in channels if c!='manual'])
 
-				# cell_ax.bar(channel_index+1, msd, width=0.35, color=colours[channel_index])
-				# cell_ax.set_xlim([0,5])
+			# -zcomp-zunique-827TIRVT data
+			zunique_channel = '-zcomp-zunique-827TIRVT'
+			zunique_difference = msd_dict[zunique_channel] / max_difference
+			zunique_difference_abs = np.abs(zunique_difference)
+			zunique_msd = 1 - np.mean(zunique_difference_abs)
+			zunique_var = np.std(zunique_difference_abs)
 
-				# plt.plot(frames, time_series[channel], label=channel[7:-9] if channel!='manual' else channel)
+			ax.add_patch(
+				mpatches.Rectangle(
+					(1, zunique_msd - 0.5*zunique_var),
+					1,
+					zunique_var,
+					facecolor='cyan'
+				)
+			)
 
-			# plt.legend(loc=2,prop={'size':10})
-			# plt.ylabel('Area ($\mu m^2$)')
-			# plt.xlabel('Frame')
+			# line through centre
+			ax.plot([1,2],[zunique_msd,zunique_msd],color='black')
+
+			# -zcomp-zedge-5BP2CN3L data
+			zedge_channel = '-zcomp-zedge-5BP2CN3L'
+			zedge_difference = msd_dict[zedge_channel] / max_difference
+			zedge_difference_abs = np.abs(zedge_difference)
+			zedge_msd = 1 - np.mean(zedge_difference_abs)
+			zedge_var = np.std(zedge_difference_abs)
+
+			ax.add_patch(
+				mpatches.Rectangle(
+					(2, zedge_msd - 0.5*zedge_var),
+					1,
+					zedge_var,
+					facecolor='red'
+				)
+			)
+
+			# line through centre
+			ax.plot([2,3],[zedge_msd,zedge_msd],color='black')
+
+			# -zcomp-mgfp-WGF9KQWY data
+			mgfp_channel = '-zcomp-mgfp-WGF9KQWY'
+			mgfp_difference = msd_dict[mgfp_channel] / max_difference
+			mgfp_difference_abs = np.abs(mgfp_difference)
+			mgfp_msd = 1 - np.mean(mgfp_difference_abs)
+			mgfp_var = np.std(mgfp_difference_abs)
+
+			ax.add_patch(
+				mpatches.Rectangle(
+					(3, mgfp_msd - 0.5*mgfp_var),
+					1,
+					mgfp_var,
+					facecolor='green'
+				)
+			)
+
+			# line through centre
+			ax.plot([3,4],[mgfp_msd,mgfp_msd],color='black')
+
+			# -zcomp-bmod-WIO67XY9 data
+			bmod_channel = '-zcomp-bmod-WIO67XY9'
+			bmod_difference = msd_dict[bmod_channel] / max_difference
+			bmod_difference_abs = np.abs(bmod_difference)
+			bmod_msd = 1 - np.mean(bmod_difference_abs)
+			bmod_var = np.std(bmod_difference_abs)
+
+			ax.add_patch(
+				mpatches.Rectangle(
+					(4, bmod_msd - 0.5*bmod_var),
+					1,
+					bmod_var,
+					facecolor='blue'
+				)
+			)
+
+			# line through centre
+			ax.plot([4,5],[bmod_msd,bmod_msd],color='black')
+
 			plt.xlim([0.5,5.5])
 			plt.ylim([0.0,1.0])
+			plt.ylabel('Inverse mean square difference from manual area')
+			ax.set_xticks([1.5, 2.5, 3.5, 4.5])
+			ax.set_xticklabels(['zVar', 'zEdge', 'mGFP', 'Selinummi'])
 			plt.show()
-
-			# amd = Absolute mean difference
-			#
 
 		else:
 			print('Please enter an experiment')

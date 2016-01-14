@@ -25,6 +25,5 @@ class Command(BaseCommand):
 
 		composite = experiment.composites.get()
 
-		print(experiment.cells.count())
-		for cell in experiment.cells.all():
-			print(cell.cell_instances.count())
+		for mask_channel in composite.mask_channels.all():
+			print(mask_channel)
