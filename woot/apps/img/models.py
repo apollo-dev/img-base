@@ -236,6 +236,31 @@ class Composite(models.Model):
 
 		return zunique_channel
 
+	def create_tracking(self):
+
+		tracking_channel, tracking_channel_created = self.channels.get_or_create(name='-tracking')
+
+		if not exists(join(self.experiment.ij_path, self.series.name)):
+			os.mkdir(join(self.experiment.ij_path, self.series.name))
+
+		for t in range(self.series.ts):
+			print('creating tracking t{}/{}'.format(t+1, self.series.ts), end='\r' if t<self.series.ts-1 else '\n')
+
+			zbf = exposure.rescale_intensity(self.gons.get(channel__name='-zbf', t=t).load() * 1.0)
+			gfp = exposure.rescale_intensity(self.gons.get(channel__name='0', t=t).load() * 1.0)
+
+			gfp_projection = np.max(gfp, axis=2) # z projection of the gfp
+
+			tracking_img = gfp_projection + zbf
+
+			tracking_gon, tracking_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=tracking_channel, t=t)
+			tracking_gon.set_origin(0,0,0,t)
+			tracking_gon.set_extent(self.series.rs, self.series.cs, 1)
+
+			tracking_gon.array = tracking_img.copy()
+			tracking_gon.save_array(join(self.experiment.ij_path, self.series.name), self.templates.get(name='source'))
+			tracking_gon.save()
+
 	def create_tile(self, channel_unique_override, top_channel='-zbf', side_channel='-zunique', main_channel='-zedge', region_list=[]):
 		tile_path = join(self.experiment.video_path, 'tile', self.series.name, '{}-{}'.format(dt.datetime.now().strftime('%Y-%m-%d-%H-%M'), channel_unique_override))
 		if not exists(tile_path):
@@ -248,10 +273,11 @@ class Composite(models.Model):
 			mask_mask = self.masks.get(t=t, channel__name__contains=channel_unique_override)
 
 			zbf = zbf_gon.load()
-			zcomp = zcomp_gon.load()[:,:,0]
-			zmean = zmean_gon.load()[:,:,0]
-			# zcomp = zcomp_gon.load()
-			# zmean = zmean_gon.load()
+			zbf = zbf if len(zbf.shape)==2 or (len(zbf.shape)==2 and zbf.shape[2]==2) else np.squeeze(zbf[:,:,0])
+			zcomp = zcomp_gon.load()
+			zcomp = zcomp if len(zcomp.shape)==2 or (len(zcomp.shape)==2 and zcomp.shape[2]==2) else np.squeeze(zcomp[:,:,0])
+			zmean = zmean_gon.load()
+			zmean = zmean if len(zmean.shape)==2 or (len(zmean.shape)==2 and zmean.shape[2]==2) else np.squeeze(zmean[:,:,0])
 			mask = mask_mask.load()
 
 			# remove cells in regions
@@ -324,7 +350,6 @@ class Composite(models.Model):
 			# tile zbf, zbf_mask, zcomp, zcomp_mask
 			top_half = np.concatenate((np.dstack([zbf, zbf, zbf]), np.dstack([zbf_mask_r, zbf_mask_g, zbf_mask_b])), axis=0)
 			bottom_half = np.concatenate((np.dstack([zmean, zmean, zmean]), np.dstack([zcomp_mask_r, zcomp_mask_g, zcomp_mask_b])), axis=0)
-			print(top_half.shape, bottom_half.shape)
 			whole = np.concatenate((top_half, bottom_half), axis=1)
 
 			imsave(join(tile_path, 'tile_{}_s{}_marker-{}_t{}.tiff'.format(self.experiment.name, self.series.name, channel_unique_override, str_value(t, self.series.ts))), whole)
@@ -340,8 +365,11 @@ class Composite(models.Model):
 			zmean_gon = self.gons.get(t=t, channel__name='-mgfp')
 
 			zbf = zbf_gon.load()
+			zbf = zbf if len(zbf.shape)==2 or (len(zbf.shape)==2 and zbf.shape[2]==2) else np.squeeze(zbf[:,:,0])
 			zcomp = zcomp_gon.load()
+			zcomp = zcomp if len(zcomp.shape)==2 or (len(zcomp.shape)==2 and zcomp.shape[2]==2) else np.squeeze(zcomp[:,:,0])
 			zmean = zmean_gon.load()
+			zmean = zmean if len(zmean.shape)==2 or (len(zmean.shape)==2 and zmean.shape[2]==2) else np.squeeze(zmean[:,:,0])
 
 			zbf_mask_r = zbf.copy()
 			zbf_mask_g = zbf.copy()
@@ -404,7 +432,7 @@ class Channel(models.Model):
 	def __str__(self):
 		return '{} > {}'.format(self.composite.id_token, self.name)
 
-	def segment(self, marker_channel_name='-zcomp', threshold_correction_factor=1.2, background=True):
+	def segment(self, marker_channel_name='-zunique', threshold_correction_factor=1.2, background=True):
 
 		unique = random_string() # defines a single identifier for this run
 		unique_key = '{}{}-{}'.format(marker_channel_name, self.name, unique)

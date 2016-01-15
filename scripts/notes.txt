@@ -1,0 +1,15 @@
+am a1 a2 a3
+
+d1 = abs(am - a1)
+d2 = abs(am - a2)
+d3 = abs(am - a3) max
+
+max_d = d3
+
+v1 = 1 - d1 / max_d
+v2 = 1 - d2 / max_d
+
+1. mean and variance plot - > box and whisker plot
+2. Order channels on x-axis by level of processing
+
+Segmentation of protrusions not used to show quality of segmentation in general

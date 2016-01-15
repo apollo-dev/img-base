@@ -16,6 +16,58 @@ spacer = ' ' *	20
 class Command(BaseCommand):
 	option_list = BaseCommand.option_list + (
 
+		make_option('--expt', # option that will appear in cmd
+			action='store', # no idea
+			dest='expt', # refer to this in options variable
+			default='260714', # some default
+			help='Name of the experiment to import' # who cares
+		),
+
+		make_option('--series', # option that will appear in cmd
+			action='store', # no idea
+			dest='series', # refer to this in options variable
+			default='15', # some default
+			help='Name of the series' # who cares
+		),
+
+		make_option('--lif', # option that will appear in cmd
+			action='store', # no idea
+			dest='lif', # refer to this in options variable
+			default='', # some default
+			help='Name of the .lif archive' # who cares
+		),
+
+		make_option('--gfp', # option that will appear in cmd
+			action='store_true', # no idea
+			dest='use_gfp', # refer to this in options variable
+			default=False, # some default
+		),
+
+		make_option('--r', # option that will appear in cmd
+			action='store', # no idea
+			dest='r', # refer to this in options variable
+			default=5, # some default
+		),
+
+		make_option('--sigma', # option that will appear in cmd
+			action='store', # no idea
+			dest='sigma', # refer to this in options variable
+			default=5, # some default
+		),
+
+		make_option('--dz', # option that will appear in cmd
+			action='store', # no idea
+			dest='dz', # refer to this in options variable
+			default=-8, # some default
+		),
+
+		make_option('--region', # option that will appear in cmd
+			action='store', # no idea
+			dest='region', # refer to this in options variable
+			default='', # some default
+			help='Name of the series' # who cares
+		),
+
 	)
 
 	args = ''
@@ -26,6 +78,12 @@ class Command(BaseCommand):
 		experiment_name = options['expt']
 		series_name = options['series']
 		lif_name = options['lif']
+		R = int(options['r'])
+		sigma = int(options['sigma'])
+		dz = int(options['dz'])
+		region_list = options['region'].split(',')
+		if region_list==['']:
+			region_list = []
 		data_root = settings.DATA_ROOT
 		lif_root = settings.LIF_ROOT
 		bfconvert_path = join(data_root, 'bftools', 'bfconvert')
@@ -89,7 +147,46 @@ class Command(BaseCommand):
 			series.ts = int(metadata['ts'])
 			series.save()
 
-			# 8. 
+			# 4. import specified series
+			# for each path in the experiment folder, create new path if the series matches.
+			for root in experiment.img_roots():
+
+				img_files = [f for f in os.listdir(root) if (os.path.splitext(f)[1] in allowed_img_extensions and experiment.path_matches_series(f, series_name))]
+				num_img_files = len(img_files)
+
+				if num_img_files>0:
+					for i, file_name in enumerate(img_files):
+						path, path_created, path_message = experiment.get_or_create_path(series, root, file_name)
+						print('step01 | adding image files in {}: ({}/{}) {} ...path {}{}'.format(root, i+1, num_img_files, file_name, path_message, spacer), end='\n' if i==num_img_files-1 else '\r')
+
+				else:
+					print('step01 | no files found in {}'.format(root))
+
+			# 4a. correct series metadata if necessary
+			series.ts = max(series.paths.all(), key=lambda p: p.t).t + 1
+			series.save()
+
+			# 5. composite
+			print('step01 | creating composite for experiment {} series {}'.format(experiment_name, series_name))
+			composite = series.compose()
+
+			# 6. make zmod channels
+			composite = Composite.objects.get(series__name='7')
+			if composite.channels.filter(name='-zmod').count()==0:
+				composite.create_zmod(R=R, delta_z=dz, sigma=sigma)
+			else:
+				print('step01 | zmod already exists...')
+
+			composite.create_zunique()
+			composite.create_tracking()
+
+			# 8. make gfp channels if requested
+			if options['use_gfp']:
+				# 8. make max gfp channels
+				if composite.channels.filter(name='-mgfp').count()==0:
+					composite.create_max_gfp()
+				else:
+					print('step01 | mgfp already exists...')
 
 		else:
 			print('input | Enter an experiment.')
