@@ -98,14 +98,24 @@ class Command(BaseCommand):
 				orientations = [token[1][1] for token in tokens]
 				channel_dict[channel_name] = {'lengths':np.array(lengths), 'frames':np.array(frames), 'orientations':np.array(orientations)}
 
+			channel_name_dict = {
+				'manual':'manual',
+				'-zcomp-bmod-WIO67XY9':'Selinummi',
+				'-zcomp-zedge-5BP2CN3L':'zEdge',
+				'-zcomp-zunique-827TIRVT':'zVar',
+				'-zcomp-mgfp-WGF9KQWY':'mGFP',
+			}
+
 			for channel_name in channel_dict:
 				frames = channel_dict[channel_name]['frames']
 				lengths = channel_dict[channel_name]['lengths']
 				orientations = channel_dict[channel_name]['lengths']
 
-				plt.plot(frames, lengths, label=channel_name)
+				plt.plot(frames, lengths, label=channel_name_dict[channel_name])
 
-			plt.legend()
+			plt.legend(loc='0')
+			plt.ylabel('Protrusion length ($\mu m$)')
+			plt.xlabel('Frame (t)')
 			plt.show()
 
 		else:
