@@ -354,15 +354,15 @@ class Composite(models.Model):
 
 			imsave(join(tile_path, 'tile_{}_s{}_marker-{}_t{}.tiff'.format(self.experiment.name, self.series.name, channel_unique_override, str_value(t, self.series.ts))), whole)
 
-	def create_region_tile(self, channel_unique_override, top_channel='-zbf', side_channel='-zunique', main_channel='-zedge'):
+	def create_region_tile(self, channel_unique_override, top_channel='-zbf', side_channel='-zunique', main_channel='-zunique'):
 		tile_path = join(self.experiment.video_path, 'regions', self.series.name, channel_unique_override)
 		if not exists(tile_path):
 			os.makedirs(tile_path)
 
 		for t in range(self.series.ts):
-			zbf_gon = self.gons.get(t=t, channel__name='-zbf')
-			zcomp_gon = self.gons.get(t=t, channel__name='-zunique')
-			zmean_gon = self.gons.get(t=t, channel__name='-mgfp')
+			zbf_gon = self.gons.get(t=t, channel__name=top_channel)
+			zcomp_gon = self.gons.get(t=t, channel__name=side_channel)
+			zmean_gon = self.gons.get(t=t, channel__name=main_channel)
 
 			zbf = zbf_gon.load()
 			zbf = zbf if len(zbf.shape)==2 or (len(zbf.shape)==2 and zbf.shape[2]==2) else np.squeeze(zbf[:,:,0])
