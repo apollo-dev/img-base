@@ -188,7 +188,9 @@ class Command(BaseCommand):
 				if composite.channels.filter(name='-mgfp').count()==0:
 					composite.create_max_gfp()
 				else:
-					print('step01 | mgfp already exists...')
-
+					if composite.channels.get(name='-mgfp').gons.count()==0:
+						composite.create_max_gfp()
+					else:
+						print('step01 | mgfp already exists...')
 		else:
 			print('Please enter an experiment')
