@@ -222,15 +222,47 @@ class CellMask(models.Model):
 	AreaShape_Extent = models.FloatField(default=0.0)
 	AreaShape_FormFactor = models.FloatField(default=0.0)
 	AreaShape_MajorAxisLength = models.FloatField(default=0.0)
+	AreaShape_MaxFeretDiameter
 	AreaShape_MaximumRadius = models.FloatField(default=0.0)
 	AreaShape_MeanRadius = models.FloatField(default=0.0)
 	AreaShape_MedianRadius = models.FloatField(default=0.0)
+	AreaShape_MinFeretDiameter
 	AreaShape_MinorAxisLength = models.FloatField(default=0.0)
 	AreaShape_Orientation = models.FloatField(default=0.0)
 	AreaShape_Perimeter = models.FloatField(default=0.0)
 	AreaShape_Solidity = models.FloatField(default=0.0)
 	Location_Center_X = models.FloatField(default=0.0)
 	Location_Center_Y = models.FloatField(default=0.0)
+	AreaShape_Zernike_0_0 = models.FloatField(default=0.0)
+	AreaShape_Zernike_1_1 = models.FloatField(default=0.0)
+	AreaShape_Zernike_2_0 = models.FloatField(default=0.0)
+	AreaShape_Zernike_2_2 = models.FloatField(default=0.0)
+	AreaShape_Zernike_3_1 = models.FloatField(default=0.0)
+	AreaShape_Zernike_3_3 = models.FloatField(default=0.0)
+	AreaShape_Zernike_4_0 = models.FloatField(default=0.0)
+	AreaShape_Zernike_4_2 = models.FloatField(default=0.0)
+	AreaShape_Zernike_4_4 = models.FloatField(default=0.0)
+	AreaShape_Zernike_5_1 = models.FloatField(default=0.0)
+	AreaShape_Zernike_5_3 = models.FloatField(default=0.0)
+	AreaShape_Zernike_5_5 = models.FloatField(default=0.0)
+	AreaShape_Zernike_6_0 = models.FloatField(default=0.0)
+	AreaShape_Zernike_6_2 = models.FloatField(default=0.0)
+	AreaShape_Zernike_6_4 = models.FloatField(default=0.0)
+	AreaShape_Zernike_6_6 = models.FloatField(default=0.0)
+	AreaShape_Zernike_7_1 = models.FloatField(default=0.0)
+	AreaShape_Zernike_7_3 = models.FloatField(default=0.0)
+	AreaShape_Zernike_7_5 = models.FloatField(default=0.0)
+	AreaShape_Zernike_7_7 = models.FloatField(default=0.0)
+	AreaShape_Zernike_8_0 = models.FloatField(default=0.0)
+	AreaShape_Zernike_8_2 = models.FloatField(default=0.0)
+	AreaShape_Zernike_8_4 = models.FloatField(default=0.0)
+	AreaShape_Zernike_8_6 = models.FloatField(default=0.0)
+	AreaShape_Zernike_8_8 = models.FloatField(default=0.0)
+	AreaShape_Zernike_9_1 = models.FloatField(default=0.0)
+	AreaShape_Zernike_9_3 = models.FloatField(default=0.0)
+	AreaShape_Zernike_9_5 = models.FloatField(default=0.0)
+	AreaShape_Zernike_9_7 = models.FloatField(default=0.0)
+	AreaShape_Zernike_9_9 = models.FloatField(default=0.0)
 
 	# methods
 	def R(self):
@@ -246,7 +278,7 @@ class CellMask(models.Model):
 		return self.t*self.series.tpf
 
 	def V(self):
-		return np.sqrt(self.VR()**2 + self.VC()**2)
+		return np.sqrt(self.VR()**2 + self.VC()**2 + self.VZ()**2)
 
 	def VR(self):
 		return self.vr*self.series.rmop / self.series.tpf
@@ -260,59 +292,78 @@ class CellMask(models.Model):
 	def A(self):
 		return self.AreaShape_Area*self.series.rmop*self.series.cmop
 
-	def raw_line(self):
-		return '{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{} \n'.format(self.experiment.name,
-																																																	self.series.name,
-																																																	self.cell.pk,
-																																																	self.r,
-																																																	self.c,
-																																																	self.z,
-																																																	self.t,
-																																																	self.vr,
-																																																	self.vc,
-																																																	self.vz,
-																																																	self.region.name,
-																																																	self.AreaShape_Area,
-																																																	self.AreaShape_Compactness,
-																																																	self.AreaShape_Eccentricity,
-																																																	self.AreaShape_EulerNumber,
-																																																	self.AreaShape_Extent,
-																																																	self.AreaShape_FormFactor,
-																																																	self.AreaShape_MajorAxisLength,
-																																																	self.AreaShape_MaximumRadius,
-																																																	self.AreaShape_MeanRadius,
-																																																	self.AreaShape_MedianRadius,
-																																																	self.AreaShape_MinorAxisLength,
-																																																	self.AreaShape_Orientation,
-																																																	self.AreaShape_Perimeter,
-																																																	self.AreaShape_Solidity)
 	def line(self):
-		return '{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}\n'.format(self.experiment.name,
-																																																		self.series.name,
-																																																		self.cell.pk,
-																																																		self.R(),
-																																																		self.C(),
-																																																		self.Z(),
-																																																		self.t,
-																																																		self.T(),
-																																																		self.VR(),
-																																																		self.VC(),
-																																																		self.VZ(),
-																																																		self.region.name,
-																																																		self.A(),
-																																																		self.AreaShape_Compactness,
-																																																		self.AreaShape_Eccentricity,
-																																																		self.AreaShape_EulerNumber,
-																																																		self.AreaShape_Extent,
-																																																		self.AreaShape_FormFactor,
-																																																		self.AreaShape_MajorAxisLength,
-																																																		self.AreaShape_MaximumRadius,
-																																																		self.AreaShape_MeanRadius,
-																																																		self.AreaShape_MedianRadius,
-																																																		self.AreaShape_MinorAxisLength,
-																																																		self.AreaShape_Orientation,
-																																																		self.AreaShape_Perimeter,
-																																																		self.AreaShape_Solidity)
+		parameters = (
+			self.experiment.name,
+			self.series.name,
+			self.channel.name,
+			self.cell.pk,
+			self.r,
+			self.R(),
+			self.c,
+			self.C(),
+			self.z,
+			self.Z(),
+			self.t,
+			self.T(),
+			self.VR(),
+			self.VC(),
+			self.VZ(),
+			self.V(),
+			self.region.name,
+			self.AreaShape_Area,
+			self.A(),
+			self.AreaShape_Compactness,
+			self.AreaShape_Eccentricity,
+			self.AreaShape_EulerNumber,
+			self.AreaShape_Extent,
+			self.AreaShape_FormFactor,
+			self.AreaShape_MajorAxisLength,
+			self.AreaShape_MaxFeretDiameter
+			self.AreaShape_MaximumRadius,
+			self.AreaShape_MeanRadius,
+			self.AreaShape_MedianRadius,
+			self.AreaShape_MinFeretDiameter,
+			self.AreaShape_MinorAxisLength,
+			self.AreaShape_Orientation,
+			self.AreaShape_Perimeter,
+			self.AreaShape_Solidity,
+			self.AreaShape_Zernike_0_0,
+			self.AreaShape_Zernike_1_1,
+			self.AreaShape_Zernike_2_0,
+			self.AreaShape_Zernike_2_2,
+			self.AreaShape_Zernike_3_1,
+			self.AreaShape_Zernike_3_3,
+			self.AreaShape_Zernike_4_0,
+			self.AreaShape_Zernike_4_2,
+			self.AreaShape_Zernike_4_4,
+			self.AreaShape_Zernike_5_1,
+			self.AreaShape_Zernike_5_3,
+			self.AreaShape_Zernike_5_5,
+			self.AreaShape_Zernike_6_0,
+			self.AreaShape_Zernike_6_2,
+			self.AreaShape_Zernike_6_4,
+			self.AreaShape_Zernike_6_6,
+			self.AreaShape_Zernike_7_1,
+			self.AreaShape_Zernike_7_3,
+			self.AreaShape_Zernike_7_5,
+			self.AreaShape_Zernike_7_7,
+			self.AreaShape_Zernike_8_0,
+			self.AreaShape_Zernike_8_2,
+			self.AreaShape_Zernike_8_4,
+			self.AreaShape_Zernike_8_6,
+			self.AreaShape_Zernike_8_8,
+			self.AreaShape_Zernike_9_1,
+			self.AreaShape_Zernike_9_3,
+			self.AreaShape_Zernike_9_5,
+			self.AreaShape_Zernike_9_7,
+			self.AreaShape_Zernike_9_9,
+		)
+
+		format_string = (['{}'] * len(parameters)).join(',')
+
+		return format_string.format(*parameters)
+
 	def load(self):
 		mask = self.mask.load()
 		mask[mask!=self.gray_value_id] = 0

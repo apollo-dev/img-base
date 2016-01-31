@@ -481,6 +481,10 @@ class Channel(models.Model):
 			mask_mask = mask_channel.masks.get(t=t)
 			mask = mask_mask.load()
 
+			# load zmod image
+			zmod_gon = self.composite.gons.get(channel__name='-zmod')
+			zmod = zmod_gon.load() * self.series.zs
+
 			# load region mask
 			if region_mask_channel is not None:
 				region_mask_mask = region_mask_channel.masks.get(t=t)
@@ -527,9 +531,14 @@ class Channel(models.Model):
 
 					cell_mask_data = list(filter(lambda d: int(d['ObjectNumber'])==cell_mask.gray_value_id, t_data))[0]
 
+					# get z
+					zmod_mask = zmod[mask==cell_mask.gray_value_id]
+					average_z_position = int(zmod_mask.mean())
+
 					# 4. assign data
 					cell_mask.r = cell_mask.marker.r
 					cell_mask.c = cell_mask.marker.c
+					cell_mask.z = average_z_position
 					cell_mask.t = t
 					cell_mask.AreaShape_Area = float(cell_mask_data['AreaShape_Area']) if str(cell_mask_data['AreaShape_Area']) != 'nan' else -1.0
 					cell_mask.AreaShape_Compactness = float(cell_mask_data['AreaShape_Compactness']) if str(cell_mask_data['AreaShape_Compactness']) != 'nan' else -1.0
@@ -538,15 +547,47 @@ class Channel(models.Model):
 					cell_mask.AreaShape_Extent = float(cell_mask_data['AreaShape_Extent']) if str(cell_mask_data['AreaShape_Extent']) != 'nan' else -1.0
 					cell_mask.AreaShape_FormFactor = float(cell_mask_data['AreaShape_FormFactor']) if str(cell_mask_data['AreaShape_FormFactor']) != 'nan' else -1.0
 					cell_mask.AreaShape_MajorAxisLength = float(cell_mask_data['AreaShape_MajorAxisLength']) if str(cell_mask_data['AreaShape_MajorAxisLength']) != 'nan' else -1.0
+					cell_mask.AreaShape_MaxFeretDiameter = float(cell_mask_data['AreaShape_MaxFeretDiameter']) if str(cell_mask_data['AreaShape_MaxFeretDiameter']) != 'nan' else -1.0
 					cell_mask.AreaShape_MaximumRadius = float(cell_mask_data['AreaShape_MaximumRadius']) if str(cell_mask_data['AreaShape_MaximumRadius']) != 'nan' else -1.0
 					cell_mask.AreaShape_MeanRadius = float(cell_mask_data['AreaShape_MeanRadius']) if str(cell_mask_data['AreaShape_MeanRadius']) != 'nan' else -1.0
 					cell_mask.AreaShape_MedianRadius = float(cell_mask_data['AreaShape_MedianRadius']) if str(cell_mask_data['AreaShape_MedianRadius']) != 'nan' else -1.0
+					cell_mask.AreaShape_MinFeretDiameter = float(cell_mask_data['AreaShape_MinFeretDiameter']) if str(cell_mask_data['AreaShape_MinFeretDiameter']) != 'nan' else -1.0
 					cell_mask.AreaShape_MinorAxisLength = float(cell_mask_data['AreaShape_MinorAxisLength']) if str(cell_mask_data['AreaShape_MinorAxisLength']) != 'nan' else -1.0
 					cell_mask.AreaShape_Orientation = float(cell_mask_data['AreaShape_Orientation']) if str(cell_mask_data['AreaShape_Orientation']) != 'nan' else -1.0
 					cell_mask.AreaShape_Perimeter = float(cell_mask_data['AreaShape_Perimeter']) if str(cell_mask_data['AreaShape_Perimeter']) != 'nan' else -1.0
 					cell_mask.AreaShape_Solidity = float(cell_mask_data['AreaShape_Solidity']) if str(cell_mask_data['AreaShape_Solidity']) != 'nan' else -1.0
 					cell_mask.Location_Center_X = float(cell_mask_data['Location_Center_X']) if str(cell_mask_data['Location_Center_X']) != 'nan' else 0
 					cell_mask.Location_Center_Y = float(cell_mask_data['Location_Center_Y']) if str(cell_mask_data['Location_Center_Y']) != 'nan' else 0
+					cell_mask.AreaShape_Zernike_0_0 = float(cell_mask_data['AreaShape_Zernike_0_0']) if str(cell_mask_data['AreaShape_Zernike_0_0']) != 'nan' else 0.0
+					cell_mask.AreaShape_Zernike_1_1 = float(cell_mask_data['AreaShape_Zernike_1_1']) if str(cell_mask_data['AreaShape_Zernike_1_1']) != 'nan' else 0.0
+					cell_mask.AreaShape_Zernike_2_0 = float(cell_mask_data['AreaShape_Zernike_2_0']) if str(cell_mask_data['AreaShape_Zernike_2_0']) != 'nan' else 0.0
+					cell_mask.AreaShape_Zernike_2_2 = float(cell_mask_data['AreaShape_Zernike_2_2']) if str(cell_mask_data['AreaShape_Zernike_2_2']) != 'nan' else 0.0
+					cell_mask.AreaShape_Zernike_3_1 = float(cell_mask_data['AreaShape_Zernike_3_1']) if str(cell_mask_data['AreaShape_Zernike_3_1']) != 'nan' else 0.0
+					cell_mask.AreaShape_Zernike_3_3 = float(cell_mask_data['AreaShape_Zernike_3_3']) if str(cell_mask_data['AreaShape_Zernike_3_3']) != 'nan' else 0.0
+					cell_mask.AreaShape_Zernike_4_0 = float(cell_mask_data['AreaShape_Zernike_4_0']) if str(cell_mask_data['AreaShape_Zernike_4_0']) != 'nan' else 0.0
+					cell_mask.AreaShape_Zernike_4_2 = float(cell_mask_data['AreaShape_Zernike_4_2']) if str(cell_mask_data['AreaShape_Zernike_4_2']) != 'nan' else 0.0
+					cell_mask.AreaShape_Zernike_4_4 = float(cell_mask_data['AreaShape_Zernike_4_4']) if str(cell_mask_data['AreaShape_Zernike_4_4']) != 'nan' else 0.0
+					cell_mask.AreaShape_Zernike_5_1 = float(cell_mask_data['AreaShape_Zernike_5_1']) if str(cell_mask_data['AreaShape_Zernike_5_1']) != 'nan' else 0.0
+					cell_mask.AreaShape_Zernike_5_3 = float(cell_mask_data['AreaShape_Zernike_5_3']) if str(cell_mask_data['AreaShape_Zernike_5_3']) != 'nan' else 0.0
+					cell_mask.AreaShape_Zernike_5_5 = float(cell_mask_data['AreaShape_Zernike_5_5']) if str(cell_mask_data['AreaShape_Zernike_5_5']) != 'nan' else 0.0
+					cell_mask.AreaShape_Zernike_6_0 = float(cell_mask_data['AreaShape_Zernike_6_0']) if str(cell_mask_data['AreaShape_Zernike_6_0']) != 'nan' else 0.0
+					cell_mask.AreaShape_Zernike_6_2 = float(cell_mask_data['AreaShape_Zernike_6_2']) if str(cell_mask_data['AreaShape_Zernike_6_2']) != 'nan' else 0.0
+					cell_mask.AreaShape_Zernike_6_4 = float(cell_mask_data['AreaShape_Zernike_6_4']) if str(cell_mask_data['AreaShape_Zernike_6_4']) != 'nan' else 0.0
+					cell_mask.AreaShape_Zernike_6_6 = float(cell_mask_data['AreaShape_Zernike_6_6']) if str(cell_mask_data['AreaShape_Zernike_6_6']) != 'nan' else 0.0
+					cell_mask.AreaShape_Zernike_7_1 = float(cell_mask_data['AreaShape_Zernike_7_1']) if str(cell_mask_data['AreaShape_Zernike_7_1']) != 'nan' else 0.0
+					cell_mask.AreaShape_Zernike_7_3 = float(cell_mask_data['AreaShape_Zernike_7_3']) if str(cell_mask_data['AreaShape_Zernike_7_3']) != 'nan' else 0.0
+					cell_mask.AreaShape_Zernike_7_5 = float(cell_mask_data['AreaShape_Zernike_7_5']) if str(cell_mask_data['AreaShape_Zernike_7_5']) != 'nan' else 0.0
+					cell_mask.AreaShape_Zernike_7_7 = float(cell_mask_data['AreaShape_Zernike_7_7']) if str(cell_mask_data['AreaShape_Zernike_7_7']) != 'nan' else 0.0
+					cell_mask.AreaShape_Zernike_8_0 = float(cell_mask_data['AreaShape_Zernike_8_0']) if str(cell_mask_data['AreaShape_Zernike_8_0']) != 'nan' else 0.0
+					cell_mask.AreaShape_Zernike_8_2 = float(cell_mask_data['AreaShape_Zernike_8_2']) if str(cell_mask_data['AreaShape_Zernike_8_2']) != 'nan' else 0.0
+					cell_mask.AreaShape_Zernike_8_4 = float(cell_mask_data['AreaShape_Zernike_8_4']) if str(cell_mask_data['AreaShape_Zernike_8_4']) != 'nan' else 0.0
+					cell_mask.AreaShape_Zernike_8_6 = float(cell_mask_data['AreaShape_Zernike_8_6']) if str(cell_mask_data['AreaShape_Zernike_8_6']) != 'nan' else 0.0
+					cell_mask.AreaShape_Zernike_8_8 = float(cell_mask_data['AreaShape_Zernike_8_8']) if str(cell_mask_data['AreaShape_Zernike_8_8']) != 'nan' else 0.0
+					cell_mask.AreaShape_Zernike_9_1 = float(cell_mask_data['AreaShape_Zernike_9_1']) if str(cell_mask_data['AreaShape_Zernike_9_1']) != 'nan' else 0.0
+					cell_mask.AreaShape_Zernike_9_3 = float(cell_mask_data['AreaShape_Zernike_9_3']) if str(cell_mask_data['AreaShape_Zernike_9_3']) != 'nan' else 0.0
+					cell_mask.AreaShape_Zernike_9_5 = float(cell_mask_data['AreaShape_Zernike_9_5']) if str(cell_mask_data['AreaShape_Zernike_9_5']) != 'nan' else 0.0
+					cell_mask.AreaShape_Zernike_9_7 = float(cell_mask_data['AreaShape_Zernike_9_7']) if str(cell_mask_data['AreaShape_Zernike_9_7']) != 'nan' else 0.0
+					cell_mask.AreaShape_Zernike_9_9 = float(cell_mask_data['AreaShape_Zernike_9_9']) if str(cell_mask_data['AreaShape_Zernike_9_9']) != 'nan' else 0.0
 					# cell_mask.find_protrusions()
 					cell_mask.save()
 

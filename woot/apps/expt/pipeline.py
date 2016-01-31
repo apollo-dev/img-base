@@ -190,7 +190,7 @@ def IdentifySecondaryObjects(module_num, primary_object_name, secondary_object_n
 def MeasureObjectSizeShape(module_num, object_name):
 	return 'MeasureObjectSizeShape:[module_num:{module_num}|svn_version:\'Unknown\'|variable_revision_number:1|show_window:False|notes:\x5B\x5D|batch_state:array(\x5B\x5D, dtype=uint8)|enabled:True|wants_pause:False]\n\
 					Select objects to measure:{object_name}\n\
-					Calculate the Zernike features?:No\n\n'.format(module_num=module_num,
+					Calculate the Zernike features?:Yes\n\n'.format(module_num=module_num,
 																												 object_name=object_name)
 
 def ExportToSpreadsheet(module_num, experiment_prefix):
