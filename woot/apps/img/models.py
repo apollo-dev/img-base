@@ -222,7 +222,7 @@ class Composite(models.Model):
 
 			zunique = np.zeros(zmean.shape)
 			for unique in np.unique(zmod):
-				zunique[zmod==unique] = np.mean(zmean[zmod==unique]) / np.sum(zmean)
+				zunique[zmod==unique] = np.max(zmean[zmod==unique]) / np.sum(zmean)
 
 			zunique = gf(zunique, sigma=3)
 
