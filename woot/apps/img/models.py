@@ -222,7 +222,7 @@ class Composite(models.Model):
 
 			zunique = np.zeros(zmean.shape)
 			for unique in np.unique(zmod):
-				zunique[zmod==unique] = np.mean(zmean[zmod==unique]) / np.sum(zmean)
+				zunique[zmod==unique] = np.max(zmean[zmod==unique]) / np.sum(zmean)
 
 			zunique = gf(zunique, sigma=3)
 
@@ -251,7 +251,7 @@ class Composite(models.Model):
 
 			gfp_projection = np.max(gfp, axis=2) # z projection of the gfp
 
-			tracking_img = gfp_projection + zbf
+			tracking_img = gfp_projection * 0.9 + zbf * 0.1
 
 			tracking_gon, tracking_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=tracking_channel, t=t)
 			tracking_gon.set_origin(0,0,0,t)
@@ -354,15 +354,15 @@ class Composite(models.Model):
 
 			imsave(join(tile_path, 'tile_{}_s{}_marker-{}_t{}.tiff'.format(self.experiment.name, self.series.name, channel_unique_override, str_value(t, self.series.ts))), whole)
 
-	def create_region_tile(self, channel_unique_override, top_channel='-zbf', side_channel='-zunique', main_channel='-zedge'):
+	def create_region_tile(self, channel_unique_override, top_channel='-zbf', side_channel='-zunique', main_channel='-zunique'):
 		tile_path = join(self.experiment.video_path, 'regions', self.series.name, channel_unique_override)
 		if not exists(tile_path):
 			os.makedirs(tile_path)
 
 		for t in range(self.series.ts):
-			zbf_gon = self.gons.get(t=t, channel__name='-zbf')
-			zcomp_gon = self.gons.get(t=t, channel__name='-zunique')
-			zmean_gon = self.gons.get(t=t, channel__name='-mgfp')
+			zbf_gon = self.gons.get(t=t, channel__name=top_channel)
+			zcomp_gon = self.gons.get(t=t, channel__name=side_channel)
+			zmean_gon = self.gons.get(t=t, channel__name=main_channel)
 
 			zbf = zbf_gon.load()
 			zbf = zbf if len(zbf.shape)==2 or (len(zbf.shape)==2 and zbf.shape[2]==2) else np.squeeze(zbf[:,:,0])

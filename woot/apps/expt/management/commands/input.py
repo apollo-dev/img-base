@@ -168,10 +168,9 @@ class Command(BaseCommand):
 
 			# 5. composite
 			print('step01 | creating composite for experiment {} series {}'.format(experiment_name, series_name))
-			composite = series.compose()
+			composite = series.compose() if series.composites.filter().count()==0 else series.composites.get()
 
 			# 6. make zmod channels
-			composite = Composite.objects.get(series__name='7')
 			if composite.channels.filter(name='-zmod').count()==0:
 				composite.create_zmod(R=R, delta_z=dz, sigma=sigma)
 			else:
@@ -186,7 +185,9 @@ class Command(BaseCommand):
 				if composite.channels.filter(name='-mgfp').count()==0:
 					composite.create_max_gfp()
 				else:
-					print('step01 | mgfp already exists...')
-
+					if composite.channels.get(name='-mgfp').gons.count()==0:
+						composite.create_max_gfp()
+					else:
+						print('step01 | mgfp already exists...')
 		else:
 			print('input | Enter an experiment.')
