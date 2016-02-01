@@ -21,7 +21,33 @@ spacer = ' ' *	20
 ### Command
 class Command(BaseCommand):
 	option_list = BaseCommand.option_list + (
+		make_option('--expt', # option that will appear in cmd
+			action='store', # no idea
+			dest='expt', # refer to this in options variable
+			default='260714', # some default
+			help='Name of the experiment to import' # who cares
+		),
 
+		make_option('--series', # option that will appear in cmd
+			action='store', # no idea
+			dest='series', # refer to this in options variable
+			default='15', # some default
+			help='Name of the series' # who cares
+		),
+
+		make_option('--region', # option that will appear in cmd
+			action='store', # no idea
+			dest='region', # refer to this in options variable
+			default='', # some default
+			help='Name of the series' # who cares
+		),
+
+		make_option('--threshold', # option that will appear in cmd
+			action='store', # no idea
+			dest='threshold', # refer to this in options variable
+			default='1.2', # some default
+			help='Name of the series' # who cares
+		),
 	)
 
 	args = ''

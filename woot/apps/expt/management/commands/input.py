@@ -184,7 +184,6 @@ class Command(BaseCommand):
 
 			composite.create_zunique()
 			composite.create_tracking()
-			composite.create_bf_gfp()
 
 			# 8. make gfp channels if requested
 			if options['use_gfp']:
@@ -196,5 +195,8 @@ class Command(BaseCommand):
 						composite.create_max_gfp()
 					else:
 						print('step01 | mgfp already exists...')
+
+				composite.create_bf_gfp()
+
 		else:
 			print('input | Enter an experiment.')

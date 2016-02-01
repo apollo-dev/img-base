@@ -186,7 +186,7 @@ class Composite(models.Model):
 			max_gfp_gon.save_array(self.series.experiment.composite_path, template)
 			max_gfp_gon.save()
 
-	def create_bf_gfp(self, smoothing_sigma=3, bf_ratio=0.1):
+	def create_bf_gfp(self, bf_ratio=0.1):
 		# template
 		template = self.templates.get(name='source') # SOURCE TEMPLATE
 
@@ -198,16 +198,15 @@ class Composite(models.Model):
 			print('step01 | creating bfgfp t{}/{}...'.format(t+1, self.series.ts), end='\r')
 
 			# load bf
-			bf_gon = self.gons.get(t=t, channel__name='1')
-			bf = exposure.rescale_intensity(bf_gon.load() * 1.0)
+			zbf_gon = self.gons.get(t=t, channel__name='-zbf')
+			zbf = exposure.rescale_intensity(zbf_gon.load() * 1.0)
 
 			# load gfp
-			gfp_gon = self.gons.get(t=t, channel__name='0')
-			gfp = exposure.rescale_intensity(gfp_gon.load() * 1.0)
-			gfp = gf(gfp, sigma=smoothing_sigma) # <<< SMOOTHING
+			mgfp_gon = self.gons.get(t=t, channel__name='-mgfp')
+			mgfp = exposure.rescale_intensity(mgfp_gon.load() * 1.0)
 
 			# mix
-			bfgfp = gfp * (1.0 - bf_ratio) + bf * bf_ratio
+			bfgfp = mgfp * (1.0 - bf_ratio) + zbf * bf_ratio
 
 			# images to channel gons
 			bfgfp_gon, bfgfp_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=bfgfp_channel, t=t)
