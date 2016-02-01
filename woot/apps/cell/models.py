@@ -310,7 +310,7 @@ class CellMask(models.Model):
 			self.VC(),
 			self.VZ(),
 			self.V(),
-			self.region.name,
+			self.region.name if self.region is not None else 'no region',
 			self.AreaShape_Area,
 			self.A(),
 			self.AreaShape_Compactness,
@@ -360,7 +360,8 @@ class CellMask(models.Model):
 			self.AreaShape_Zernike_9_9,
 		)
 
-		format_string = (['{}'] * len(parameters)).join(',')
+		format_string = ','.join(['{}'] * len(parameters))
+		format_string = '{}\n'.format(format_string)
 
 		return format_string.format(*parameters)
 

@@ -513,8 +513,8 @@ class Channel(models.Model):
 			mask = mask_mask.load()
 
 			# load zmod image
-			zmod_gon = self.composite.gons.get(channel__name='-zmod')
-			zmod = zmod_gon.load() * self.series.zs
+			zmod_gon = self.composite.gons.get(t=t, channel__name='-zmod')
+			zmod = exposure.rescale_intensity(zmod_gon.load() * 1.0) * self.composite.series.zs
 
 			# load region mask
 			if region_mask_channel is not None:

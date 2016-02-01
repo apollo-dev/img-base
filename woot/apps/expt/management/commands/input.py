@@ -119,7 +119,7 @@ class Command(BaseCommand):
 				print('input | series {}... already exists.'.format(series_name))
 
 			# 6. extract lif if necessary
-			if len(os.listdir(experiment.storage_path))==0 and len(os.listdir(experiment.composite_path))==0:
+			if len(os.listdir(experiment.storage_path))==0:
 
 				# extract lif
 				lif_path = join(lif_root, lif_name)
@@ -127,7 +127,7 @@ class Command(BaseCommand):
 
 				# run extract
 				print('input | Extracting lif...')
-				call('{} {} {}'.format(bfconvert, lif_path, lif_template), shell=True)
+				call('{} {} {}'.format(bfconvert_path, lif_path, lif_template), shell=True)
 
 			else:
 				print('input | .lif already extracted for experiment {}, series {}; continuing... '.format(experiment_name, series_name))

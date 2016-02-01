@@ -116,11 +116,11 @@ class Command(BaseCommand):
 			if composite.channels.filter(name='-bfgfp'):
 				# segment using the gfp channels only
 				bfgfp_channel = composite.channels.get(name='-bfgfp')
-				bfgfp_unique = mgfp_channel.segment(threshold_correction_factor=threshold_correction_factor)
+				bfgfp_unique = bfgfp_channel.segment(threshold_correction_factor=threshold_correction_factor)
 
 				# tile
 				print('creating tile...')
-				composite.create_tile(mgfp_unique, side_channel='-bfgfp', main_channel='-mgfp', region_list=region_list)
+				composite.create_tile(bfgfp_unique, side_channel='-bfgfp', main_channel='-mgfp', region_list=region_list)
 
 				# export
 				print('exporting data...')
