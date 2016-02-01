@@ -2,12 +2,19 @@
 
 # django
 from django.core.management.base import BaseCommand, CommandError
+from django.conf import settings
 
 # local
-
+from apps.expt.models import Experiment
+from apps.expt.data import *
+from apps.expt.util import *
 
 # util
-
+import os
+from os.path import join, exists, splitext
+from optparse import make_option
+from subprocess import call
+import shutil as sh
 
 spacer = ' ' *	20
 
