@@ -186,6 +186,38 @@ class Composite(models.Model):
 			max_gfp_gon.save_array(self.series.experiment.composite_path, template)
 			max_gfp_gon.save()
 
+	def create_bf_gfp(self, smoothing_sigma=3, bf_ratio=0.1):
+		# template
+		template = self.templates.get(name='source') # SOURCE TEMPLATE
+
+		# channels
+		bfgfp_channel, bfgfp_channel_created = self.channels.get_or_create(name='-bfgfp')
+
+		# iterate over frames
+		for t in range(self.series.ts):
+			print('step01 | creating bfgfp t{}/{}...'.format(t+1, self.series.ts), end='\r')
+
+			# load bf
+			bf_gon = self.gons.get(t=t, channel__name='1')
+			bf = exposure.rescale_intensity(bf_gon.load() * 1.0)
+
+			# load gfp
+			gfp_gon = self.gons.get(t=t, channel__name='0')
+			gfp = exposure.rescale_intensity(gfp_gon.load() * 1.0)
+			gfp = gf(gfp, sigma=smoothing_sigma) # <<< SMOOTHING
+
+			# mix
+			bfgfp = gfp * (1.0 - bf_ratio) + bf * bf_ratio
+
+			# images to channel gons
+			bfgfp_gon, bfgfp_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=bfgfp_channel, t=t)
+			bfgfp_gon.set_origin(0,0,0,t)
+			bfgfp_gon.set_extent(self.series.rs, self.series.cs, 1)
+
+			bfgfp_gon.array = bfgfp
+			bfgfp_gon.save_array(self.series.experiment.composite_path, template)
+			bfgfp_gon.save()
+
 	def create_zedge(self, channel_unique_override):
 		zedge_channel, zedge_channel_created = self.channels.get_or_create(name='-zedge')
 

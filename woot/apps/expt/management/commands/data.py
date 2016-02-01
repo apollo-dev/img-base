@@ -80,18 +80,18 @@ class Command(BaseCommand):
 
 						print('step02 | processing marker ({}/{})... {} tracks, {} instances, {} markers'.format(i+1,len(data),composite.tracks.count(), composite.track_instances.count(), composite.markers.count()), end='\n' if i==len(data)-1 else '\r')
 
-			if composite.channels.filter(name='-mgfp'):
+			if composite.channels.filter(name='-bfgfp'):
 				# segment using the gfp channels only
-				mgfp_channel = composite.channels.get(name='-mgfp')
-				mgfp_unique = mgfp_channel.segment(threshold_correction_factor=threshold_correction_factor)
+				bfgfp_channel = composite.channels.get(name='-bfgfp')
+				bfgfp_unique = mgfp_channel.segment(threshold_correction_factor=threshold_correction_factor)
 
 				# tile
 				print('creating tile...')
-				composite.create_tile(mgfp_unique, side_channel='-mgfp', main_channel='-mgfp', region_list=region_list)
+				composite.create_tile(mgfp_unique, side_channel='-bfgfp', main_channel='-mgfp', region_list=region_list)
 
 				# export
 				print('exporting data...')
-				composite.series.export_data(mgfp_unique, region_list=region_list)
+				composite.series.export_data(bfgfp_unique, region_list=region_list)
 
 			else:
 				# segment

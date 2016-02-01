@@ -178,6 +178,7 @@ class Command(BaseCommand):
 
 			composite.create_zunique()
 			composite.create_tracking()
+			composite.create_bf_gfp()
 
 			# 8. make gfp channels if requested
 			if options['use_gfp']:
