@@ -222,11 +222,11 @@ class CellMask(models.Model):
 	AreaShape_Extent = models.FloatField(default=0.0)
 	AreaShape_FormFactor = models.FloatField(default=0.0)
 	AreaShape_MajorAxisLength = models.FloatField(default=0.0)
-	AreaShape_MaxFeretDiameter
+	AreaShape_MaxFeretDiameter = models.FloatField(default=0.0)
 	AreaShape_MaximumRadius = models.FloatField(default=0.0)
 	AreaShape_MeanRadius = models.FloatField(default=0.0)
 	AreaShape_MedianRadius = models.FloatField(default=0.0)
-	AreaShape_MinFeretDiameter
+	AreaShape_MinFeretDiameter = models.FloatField(default=0.0)
 	AreaShape_MinorAxisLength = models.FloatField(default=0.0)
 	AreaShape_Orientation = models.FloatField(default=0.0)
 	AreaShape_Perimeter = models.FloatField(default=0.0)
@@ -319,7 +319,7 @@ class CellMask(models.Model):
 			self.AreaShape_Extent,
 			self.AreaShape_FormFactor,
 			self.AreaShape_MajorAxisLength,
-			self.AreaShape_MaxFeretDiameter
+			self.AreaShape_MaxFeretDiameter,
 			self.AreaShape_MaximumRadius,
 			self.AreaShape_MeanRadius,
 			self.AreaShape_MedianRadius,
