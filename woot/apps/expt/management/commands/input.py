@@ -95,7 +95,7 @@ class Command(BaseCommand):
 		sigma = int(options['sigma'])
 		dz = int(options['dz'])
 		region_list = options['region'].split(',')
-		bf_ratio = options['bf_ratio']
+		bf_ratio = float(options['bf_ratio'])
 		if region_list==['']:
 			region_list = []
 		data_root = settings.DATA_ROOT
