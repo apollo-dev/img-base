@@ -74,6 +74,13 @@ class Command(BaseCommand):
 			help='Name of the series' # who cares
 		),
 
+		make_option('--bf_ratio', # option that will appear in cmd
+			action='store', # no idea
+			dest='bf_ratio', # refer to this in options variable
+			default='0.1', # some default
+			help='Name of the series' # who cares
+		),
+
 	)
 
 	args = ''
@@ -88,6 +95,7 @@ class Command(BaseCommand):
 		sigma = int(options['sigma'])
 		dz = int(options['dz'])
 		region_list = options['region'].split(',')
+		bf_ratio = options['bf_ratio']
 		if region_list==['']:
 			region_list = []
 		data_root = settings.DATA_ROOT
@@ -196,7 +204,7 @@ class Command(BaseCommand):
 					else:
 						print('step01 | mgfp already exists...')
 
-				composite.create_bf_gfp()
+				composite.create_bf_gfp(bf_ratio=bf_ratio)
 
 		else:
 			print('input | Enter an experiment.')
