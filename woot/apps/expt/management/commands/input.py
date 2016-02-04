@@ -185,11 +185,7 @@ class Command(BaseCommand):
 			composite = series.compose() if series.composites.filter().count()==0 else series.composites.get()
 
 			# 6. make zmod channels
-			if composite.channels.filter(name='-zmod').count()==0:
-				composite.create_zmod(R=R, delta_z=dz, sigma=sigma)
-			else:
-				print('step01 | zmod already exists...')
-
+			composite.create_zmod(R=R, delta_z=dz, sigma=sigma)
 			composite.create_zunique()
 			composite.create_tracking()
 
