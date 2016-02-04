@@ -147,7 +147,7 @@ class Command(BaseCommand):
 				# run show inf
 				lif_path = join(lif_root, lif_name)
 				print('step01 | Extracting lif metadata for experiment {}... '.format(experiment_name))
-				call('{} -nopix -omexml {} > {}'.format(showinf, lif_path, metadata_file_name), shell=True)
+				call('{} -nopix -omexml {} > {}'.format(showinf_path, lif_path, metadata_file_name), shell=True)
 
 			metadata = series_metadata(metadata_file_name, series_name)
 
