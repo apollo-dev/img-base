@@ -278,6 +278,10 @@ class Composite(models.Model):
 			print('creating tracking t{}/{}'.format(t+1, self.series.ts), end='\r' if t<self.series.ts-1 else '\n')
 
 			zbf = exposure.rescale_intensity(self.gons.get(channel__name='-zbf', t=t).load() * 1.0)
+
+			if zbf.shape[2]>1:
+				zbf = zbf[:,:,0]
+
 			gfp = exposure.rescale_intensity(self.gons.get(channel__name='0', t=t).load() * 1.0)
 
 			gfp_projection = np.max(gfp, axis=2) # z projection of the gfp
