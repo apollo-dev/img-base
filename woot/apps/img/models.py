@@ -279,8 +279,9 @@ class Composite(models.Model):
 
 			zbf = exposure.rescale_intensity(self.gons.get(channel__name='-zbf', t=t).load() * 1.0)
 
-			if zbf.shape[2]>1:
-				zbf = zbf[:,:,0]
+			if len(zbf.shape)>2:
+				if zbf.shape[2]>1:
+					zbf = zbf[:,:,0]
 
 			gfp = exposure.rescale_intensity(self.gons.get(channel__name='0', t=t).load() * 1.0)
 
