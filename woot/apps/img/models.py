@@ -201,6 +201,10 @@ class Composite(models.Model):
 			zbf_gon = self.gons.get(t=t, channel__name='-zbf')
 			zbf = exposure.rescale_intensity(zbf_gon.load() * 1.0)
 
+			if len(zbf.shape)>2:
+				if zbf.shape[2]>1:
+					zbf = zbf[:,:,0]
+
 			# load gfp
 			mgfp_gon = self.gons.get(t=t, channel__name='-mgfp')
 			mgfp = exposure.rescale_intensity(mgfp_gon.load() * 1.0)
