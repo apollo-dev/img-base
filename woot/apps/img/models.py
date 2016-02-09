@@ -472,8 +472,7 @@ class Channel(models.Model):
 	def __str__(self):
 		return '{} > {}'.format(self.composite.id_token, self.name)
 
-	def segment(self, marker_channel_name='-zunique', threshold_correction_factor=1.2, background=True):
-
+	def segment_setup(self, marker_channel_name='-zunique'):
 		unique = random_string() # defines a single identifier for this run
 		unique_key = '{}{}-{}'.format(marker_channel_name, self.name, unique)
 
@@ -485,10 +484,19 @@ class Channel(models.Model):
 		print('running primary')
 		marker_channel_primary_name = marker_channel.primary(unique=unique)
 
-		# 2. create pipeline and run
+		return unique, unique_key, marker_channel_primary_name
+
+	def segment(self, pipeline=None, marker_channel_name='-zunique'):
+
+		if pipeline is None:
+			unique, unique_key, marker_channel_primary_name = self.segment_setup()
+
+			# 2. create pipeline and run
+			self.composite.experiment.save_marker_pipeline(series_name=self.composite.series.name, primary_channel_name=marker_channel_primary_name, secondary_channel_name=self.name, unique=unique, unique_key=unique_key)
+			pipeline = 'markers.cppipe'
+
 		print('run pipeline')
-		self.composite.experiment.save_marker_pipeline(series_name=self.composite.series.name, primary_channel_name=marker_channel_primary_name, secondary_channel_name=self.name, threshold_correction_factor=threshold_correction_factor, background=background, unique=unique, unique_key=unique_key)
-		self.composite.experiment.run_pipeline(series_ts=self.composite.series.ts)
+		self.composite.experiment.run_pipeline(pipeline=pipeline, series_ts=self.composite.series.ts)
 
 		print('import masks')
 		# 3. import masks and create new mask channel
@@ -653,7 +661,7 @@ class Channel(models.Model):
 
 		# 2. create pipeline and run
 		self.composite.experiment.save_region_pipeline(series_name=self.composite.series.name, primary_channel_name=region_marker_channel_primary_name, secondary_channel_name=self.name, threshold_correction_factor=threshold_correction_factor, background=background, unique=unique, unique_key=unique_key)
-		self.composite.experiment.run_pipeline(series_ts=self.composite.series.ts, key='regions')
+		self.composite.experiment.run_pipeline(series_ts=self.composite.series.ts, pipeline='regions.cppipe')
 
 		# 3. import masks
 		print('import masks')

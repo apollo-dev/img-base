@@ -38,7 +38,7 @@ class Command(BaseCommand):
 		make_option('--pipeline', # option that will appear in cmd
 			action='store', # no idea
 			dest='pipeline', # refer to this in options variable
-			default='markers.cppipe', # some default
+			default='', # some default
 			help='Name of the series' # who cares
 		),
 	)
@@ -50,18 +50,23 @@ class Command(BaseCommand):
 		# vars
 		experiment_name = options['expt']
 		series_name = options['series']
+		pipeline = options['pipeline']
 
 		if experiment_name!='' and series_name!='':
 			experiment = Experiment.objects.get(name=experiment_name)
 			series = experiment.series.get(name=series_name)
 
-			# 2. Import tracks
+			# check pipeline exists
+			pipeline_path = join(experiment.pipeline_path, pipeline)
+			if pipeline and not exists(pipeline_path):
+				raise CommandError('entered pipeline does not exist: {}'.format(pipeline))
+
 			# select composite
 			composite = series.composites.get()
 
 			# segment using the gfp channels only
 			bfgfp_channel = composite.channels.get(name='-bfgfp')
-			bfgfp_unique = bfgfp_channel.segment(threshold_correction_factor=threshold_correction_factor)
+			bfgfp_unique = bfgfp_channel.segment(pipeline=pipeline)
 
 			# tile
 			print('creating tile...')

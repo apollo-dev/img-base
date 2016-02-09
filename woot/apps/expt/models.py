@@ -125,7 +125,7 @@ class Experiment(models.Model):
 
 	def generate_prototype_pipeline(self, series_name=None, primary_channel_name=None, secondary_channel_name=None, unique='', unique_key=''):
 
-		
+
 
 	def save_marker_pipeline(self, series_name=None, primary_channel_name=None, secondary_channel_name=None, threshold_correction_factor=1.2, background=True, unique='', unique_key=''):
 
@@ -141,10 +141,8 @@ class Experiment(models.Model):
 		with open(os.path.join(self.pipeline_path, 'regions.cppipe'), 'w+') as open_pipeline_file:
 			open_pipeline_file.write(pipeline_text)
 
-	def run_pipeline(self, series_ts=0, key='marker'):
-		pipeline = os.path.join(self.pipeline_path, 'markers.cppipe')
-		if key!='marker':
-			pipeline = os.path.join(self.pipeline_path, 'regions.cppipe')
+	def run_pipeline(self, series_ts=0, pipeline='markers.cppipe'):
+		pipeline = os.path.join(self.pipeline_path, pipeline)
 		cmd = '/Applications/CellProfiler.app/Contents/MacOS/CellProfiler -c -r -i {} -o {} -p {}'.format(self.composite_path, self.cp_path, pipeline)
 		print('segmenting...')
 		# process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
