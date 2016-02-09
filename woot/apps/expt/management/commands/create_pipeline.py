@@ -99,7 +99,9 @@ class Command(BaseCommand):
 			bfgfp_channel = composite.channels.get(name='-bfgfp')
 			unique, unique_key, marker_channel_primary_name = bfgfp_channel.segment_setup()
 
-			experiment.generate_prototype_pipeline(series_name=series, primary_channel_name=marker_channel_primary_name, secondary_channel_name=bfgfp_channel.name, unique=unique, unique_key=unique_key)
+			experiment.generate_prototype_pipeline(series_name=series.name, primary_channel_name=marker_channel_primary_name, secondary_channel_name=bfgfp_channel.name, unique=unique, unique_key=unique_key)
+
+			print('UNIQUE KEY: {}'.format(unique_key))
 
 		else:
 			print('Please enter an experiment')

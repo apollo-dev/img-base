@@ -124,9 +124,9 @@ class Experiment(models.Model):
 			return None, False, 'does not match template.'
 
 	def generate_prototype_pipeline(self, series_name=None, primary_channel_name=None, secondary_channel_name=None, unique='', unique_key=''):
-		pipeline_text = prototype_pipeline('{}_s{}_{}_'.format(self.name, series_name, unique), unique_key, 's{}_ch{}'.format(series_name, primary_channel_name), 's{}_ch{}'.format(series_name, secondary_channel_name))
+		pipeline_text = prototype_pipeline(self.composite_path, '{}_s{}_{}_'.format(self.name, series_name, unique), unique_key, 's{}_ch{}'.format(series_name, primary_channel_name), 's{}_ch{}'.format(series_name, secondary_channel_name))
 
-		with open(os.path.join(self.pipeline_path, 'markers.cppipe'), 'w+') as open_pipeline_file:
+		with open(os.path.join(self.pipeline_path, 'prototype.cppipe'), 'w+') as open_pipeline_file:
 			open_pipeline_file.write(pipeline_text)
 
 	def save_marker_pipeline(self, series_name=None, primary_channel_name=None, secondary_channel_name=None, threshold_correction_factor=1.2, background=True, unique='', unique_key=''):

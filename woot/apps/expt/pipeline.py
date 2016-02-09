@@ -4,11 +4,14 @@
 Text representation of a cell profiler pipeline that can be used to modify data processing.
 '''
 
-def prototype_pipeline(experiment_prefix, unique_key, primary_channel_name, secondary_channel_name):
+def prototype_pipeline(img_path, experiment_prefix, unique_key, primary_channel_name, secondary_channel_name):
 	pipeline = ''
-	pipeline += Header(2)
-	pipeline += LoadImages(1, primary_channel_name, 'Images', 'Primary', 'ObjectName', 'OutlineName')
-	pipeline += LoadImages(2, secondary_channel_name, 'Images', 'Secondary', 'ObjectName', 'OutlineName')
+	pipeline += Header(5)
+	pipeline += LoadImages(1, primary_channel_name, 'Images', 'Primary', 'ObjectName', 'OutlineName', input_location=img_path, show_window=False)
+	pipeline += LoadImages(2, secondary_channel_name, 'Images', 'Secondary', 'ObjectName', 'OutlineName', input_location=img_path, show_window=False)
+	pipeline += IdentifyPrimaryObjects(3, 'Primary', 'Markers')
+	pipeline += ExportToSpreadsheet(4, experiment_prefix)
+	pipeline += SaveImages(5, 'Objects', 'ImageName', 'Cells', 'Secondary', unique_key)
 
 	return pipeline
 
@@ -49,14 +52,16 @@ def Header(module_count):
 					ModuleCount:{module_count}\n\
 					HasImagePlaneDetails:False\n\n'.format(module_count=module_count)
 
-def LoadImages(module_num, channel_name, objects_or_images, image_name, object_name, outline_name):
-	return 'LoadImages:[module_num:{module_num}|svn_version:\'Unknown\'|variable_revision_number:11|show_window:False|notes:\x5B\x5D|batch_state:array(\x5B\x5D, dtype=uint8)|enabled:True|wants_pause:False]\n\
+def LoadImages(module_num, channel_name, objects_or_images, image_name, object_name, outline_name, input_location=None, show_window=False):
+	input_file_location = 'Elsewhere...\x7C{}'.format(input_location) if input_location is not None else 'Default Input Folder\x7C'
+
+	return 'LoadImages:[module_num:{module_num}|svn_version:\'Unknown\'|variable_revision_number:11|show_window:{show_window}|notes:\x5B\x5D|batch_state:array(\x5B\x5D, dtype=uint8)|enabled:True|wants_pause:False]\n\
 					File type to be loaded:individual images\n\
 					File selection method:Text-Regular expressions\n\
 					Number of images in each group?:3\n\
 					Type the text that the excluded images have in common:Do not use\n\
 					Analyze all subfolders within the selected folder?:None\n\
-					Input image file location:Default Input Folder\x7C\n\
+					Input image file location:{input_file_location}\n\
 					Check image sets for unmatched or duplicate files?:Yes\n\
 					Group images by metadata?:No\n\
 					Exclude certain files?:No\n\
@@ -78,15 +83,17 @@ def LoadImages(module_num, channel_name, objects_or_images, image_name, object_n
 					Retain outlines of loaded objects?:No\n\
 					Name the outline image:{outline_name}\n\
 					Channel number:1\n\
-					Rescale intensities?:Yes\n\n'.format(module_num=module_num,
+					Rescale intensities?:Yes\n\n'.format(show_window=show_window,
+																							 module_num=module_num,
+																							 input_file_location=input_file_location,
 																							 channel_name=channel_name,
 																							 objects_or_images=objects_or_images,
 																							 image_name=image_name,
 																							 object_name=object_name,
 																							 outline_name=outline_name)
 
-def FilterObjects(module_num, output_object_name, input_object_name):
-	return 'FilterObjects:[module_num:{module_num}|svn_version:\'Unknown\'|variable_revision_number:7|show_window:False|notes:\x5B\x5D|batch_state:array(\x5B\x5D, dtype=uint8)|enabled:True|wants_pause:False]\n\
+def FilterObjects(module_num, output_object_name, input_object_name, show_window=False):
+	return 'FilterObjects:[module_num:{module_num}|svn_version:\'Unknown\'|variable_revision_number:7|show_window:{show_window}|notes:\x5B\x5D|batch_state:array(\x5B\x5D, dtype=uint8)|enabled:True|wants_pause:False]\n\
 					Name the output objects:{output_object_name}\n\
 					Select the object to filter:{input_object_name}\n\
 					Select the filtering mode:Measurements\n\
@@ -104,10 +111,10 @@ def FilterObjects(module_num, output_object_name, input_object_name):
 					Filter using a minimum measurement value?:Yes\n\
 					Minimum value:100.0\n\
 					Filter using a maximum measurement value?:No\n\
-					Maximum value:1.0\n\n'.format(module_num=module_num, output_object_name=output_object_name, input_object_name=input_object_name)
+					Maximum value:1.0\n\n'.format(show_window=show_window, module_num=module_num, output_object_name=output_object_name, input_object_name=input_object_name)
 
-def IdentifyPrimaryObjects(module_num, image_name, object_name, min_radius=3, max_radius=13):
-	return 'IdentifyPrimaryObjects:[module_num:{module_num}|svn_version:\'Unknown\'|variable_revision_number:10|show_window:False|notes:\x5B\x5D|batch_state:array(\x5B\x5D, dtype=uint8)|enabled:True|wants_pause:False]\n\
+def IdentifyPrimaryObjects(module_num, image_name, object_name, min_radius=3, max_radius=13, show_window=False):
+	return 'IdentifyPrimaryObjects:[module_num:{module_num}|svn_version:\'Unknown\'|variable_revision_number:10|show_window:{show_window}|notes:\x5B\x5D|batch_state:array(\x5B\x5D, dtype=uint8)|enabled:True|wants_pause:False]\n\
 					Select the input image:{image_name}\n\
 					Name the primary objects to be identified:{object_name}\n\
 					Typical diameter of objects, in pixel units (Min,Max):{min_radius},{max_radius}\n\
@@ -146,17 +153,18 @@ def IdentifyPrimaryObjects(module_num, image_name, object_name, min_radius=3, ma
 					Minimize the weighted variance or the entropy?:Weighted variance\n\
 					Assign pixels in the middle intensity class to the foreground or the background?:Foreground\n\
 					Method to calculate adaptive window size:Image size\n\
-					Size of adaptive window:10\n\n'.format(module_num=module_num,
+					Size of adaptive window:10\n\n'.format(show_window=show_window,
+																								 module_num=module_num,
 																								 image_name=image_name,
 																								 object_name=object_name,
 																								 min_radius=min_radius,
 																								 max_radius=max_radius)
 
-def IdentifySecondaryObjects(module_num, primary_object_name, secondary_object_name, image_name, outline_name, threshold_correction_factor=1.2, background=True):
+def IdentifySecondaryObjects(module_num, primary_object_name, secondary_object_name, image_name, outline_name, threshold_correction_factor=1.2, background=True, show_window=False):
 
 	background = 'Background' if background is True else 'Foreground'
 
-	return 'IdentifySecondaryObjects:[module_num:{module_num}|svn_version:\'Unknown\'|variable_revision_number:9|show_window:False|notes:\x5B\x5D|batch_state:array(\x5B\x5D, dtype=uint8)|enabled:True|wants_pause:False]\n\
+	return 'IdentifySecondaryObjects:[module_num:{module_num}|svn_version:\'Unknown\'|variable_revision_number:9|show_window:{show_window}|notes:\x5B\x5D|batch_state:array(\x5B\x5D, dtype=uint8)|enabled:True|wants_pause:False]\n\
 					Select the input objects:{primary_object_name}\n\
 					Name the objects to be identified:{secondary_object_name}\n\
 					Select the method to identify the secondary objects:Propagation\n\
@@ -187,7 +195,8 @@ def IdentifySecondaryObjects(module_num, primary_object_name, secondary_object_n
 					Minimize the weighted variance or the entropy?:Weighted variance\n\
 					Assign pixels in the middle intensity class to the foreground or the background?:{background}\n\
 					Method to calculate adaptive window size:Image size\n\
-					Size of adaptive window:10\n\n'.format(module_num=module_num,
+					Size of adaptive window:10\n\n'.format(show_window=show_window,
+																								 module_num=module_num,
 																								 primary_object_name=primary_object_name,
 																								 secondary_object_name=secondary_object_name,
 																								 image_name=image_name,
@@ -195,14 +204,15 @@ def IdentifySecondaryObjects(module_num, primary_object_name, secondary_object_n
 																								 threshold_correction_factor=threshold_correction_factor,
 																								 background=background)
 
-def MeasureObjectSizeShape(module_num, object_name):
-	return 'MeasureObjectSizeShape:[module_num:{module_num}|svn_version:\'Unknown\'|variable_revision_number:1|show_window:False|notes:\x5B\x5D|batch_state:array(\x5B\x5D, dtype=uint8)|enabled:True|wants_pause:False]\n\
+def MeasureObjectSizeShape(module_num, object_name, show_window=False):
+	return 'MeasureObjectSizeShape:[module_num:{module_num}|svn_version:\'Unknown\'|variable_revision_number:1|show_window:{show_window}|notes:\x5B\x5D|batch_state:array(\x5B\x5D, dtype=uint8)|enabled:True|wants_pause:False]\n\
 					Select objects to measure:{object_name}\n\
-					Calculate the Zernike features?:Yes\n\n'.format(module_num=module_num,
-																												 object_name=object_name)
+					Calculate the Zernike features?:Yes\n\n'.format(show_window=show_window,
+																													module_num=module_num,
+																													object_name=object_name)
 
-def ExportToSpreadsheet(module_num, experiment_prefix):
-	return 'ExportToSpreadsheet:[module_num:{module_num}|svn_version:\'Unknown\'|variable_revision_number:11|show_window:True|notes:\x5B\x5D|batch_state:array(\x5B\x5D, dtype=uint8)|enabled:True|wants_pause:False]\n\
+def ExportToSpreadsheet(module_num, experiment_prefix, show_window=False):
+	return 'ExportToSpreadsheet:[module_num:{module_num}|svn_version:\'Unknown\'|variable_revision_number:11|show_window:{show_window}|notes:\x5B\x5D|batch_state:array(\x5B\x5D, dtype=uint8)|enabled:True|wants_pause:False]\n\
 					Select the column delimiter:Comma (",")\n\
 					Add image metadata columns to your object data file?:No\n\
 					Limit output to a size that is allowed in Excel?:No\n\
@@ -224,36 +234,39 @@ def ExportToSpreadsheet(module_num, experiment_prefix):
 					Data to export:Do not use\n\
 					Combine these object measurements with those of the previous object?:No\n\
 					File name:DATA.csv\n\
-					Use the object name for the file name?:Yes\n\n'.format(module_num=module_num,
+					Use the object name for the file name?:Yes\n\n'.format(show_window=show_window,
+																																 module_num=module_num,
 																																 experiment_prefix=experiment_prefix)
 
-def Smooth(module_num, input_image_name, output_image_name, typical_artifact_diameter=16.0):
-	return 'Smooth:[module_num:{module_num}|svn_version:\'Unknown\'|variable_revision_number:2|show_window:False|notes:\x5B\x5D|batch_state:array(\x5B\x5D, dtype=uint8)|enabled:True|wants_pause:False]\n\
+def Smooth(module_num, input_image_name, output_image_name, typical_artifact_diameter=16.0, show_window=False):
+	return 'Smooth:[module_num:{module_num}|svn_version:\'Unknown\'|variable_revision_number:2|show_window:{show_window}|notes:\x5B\x5D|batch_state:array(\x5B\x5D, dtype=uint8)|enabled:True|wants_pause:False]\n\
 					Select the input image:{input_image_name}\n\
 					Name the output image:{output_image_name}\n\
 					Select smoothing method:Smooth Keeping Edges\n\
 					Calculate artifact diameter automatically?:Yes\n\
 					Typical artifact diameter:{typical_artifact_diameter}\n\
 					Edge intensity difference:0.1\n\
-					Clip intensities to 0 and 1?:Yes\n\n'.format(module_num=module_num,
+					Clip intensities to 0 and 1?:Yes\n\n'.format(show_window=show_window,
+																											 module_num=module_num,
 																											 input_image_name=input_image_name,
 																											 output_image_name=output_image_name,
 																											 typical_artifact_diameter=typical_artifact_diameter)
 
-def ExpandOrShrinkObjects(module_num, input_object_name, output_object_name):
-	return 'ExpandOrShrinkObjects:[module_num:{module_num}|svn_version:\'Unknown\'|variable_revision_number:1|show_window:True|notes:\x5B\x5D|batch_state:array(\x5B\x5D, dtype=uint8)|enabled:True|wants_pause:False]\n\
+def ExpandOrShrinkObjects(module_num, input_object_name, output_object_name, show_window=False):
+	return 'ExpandOrShrinkObjects:[module_num:{module_num}|svn_version:\'Unknown\'|variable_revision_number:1|show_window:{show_window}|notes:\x5B\x5D|batch_state:array(\x5B\x5D, dtype=uint8)|enabled:True|wants_pause:False]\n\
 					Select the input objects:{input_object_name}\n\
 					Name the output objects:{output_object_name}\n\
 					Select the operation:Expand objects until touching\n\
 					Number of pixels by which to expand or shrink:1\n\
 					Fill holes in objects so that all objects shrink to a single point?:No\n\
 					Retain the outlines of the identified objects?:No\n\
-					Name the outline image:ShrunkenNucleiOutlines\n\n'.format(module_num=module_num,
+					Name the outline image:ShrunkenNucleiOutlines\n\n'.format(show_window=show_window,
+																																		module_num=module_num,
 																																		input_object_name=input_object_name,
 																																		output_object_name=output_object_name)
 
-def TrackObjects(module_num, object_name):
-	return 'TrackObjects:[module_num:{module_num}|svn_version:\'Unknown\'|variable_revision_number:5|show_window:True|notes:\x5B\x5D|batch_state:array(\x5B\x5D, dtype=uint8)|enabled:True|wants_pause:False]\n\
+def TrackObjects(module_num, object_name, show_window=False):
+	return 'TrackObjects:[module_num:{module_num}|svn_version:\'Unknown\'|variable_revision_number:5|show_window:{show_window}|notes:\x5B\x5D|batch_state:array(\x5B\x5D, dtype=uint8)|enabled:True|wants_pause:False]\n\
 			Choose a tracking method:Overlap\n\
 			Select the objects to track:{object_name}\n\
 			Select object measurement to use for tracking:None\n\
@@ -276,11 +289,12 @@ def TrackObjects(module_num, object_name):
 			Filter using a minimum lifetime?:Yes\n\
 			Minimum lifetime:1\n\
 			Filter using a maximum lifetime?:No\n\
-			Maximum lifetime:100\n\n'.format(module_num=module_num,
+			Maximum lifetime:100\n\n'.format(show_window=show_window,
+																			 module_num=module_num,
 																			 object_name=object_name)
 
-def SaveImages(module_num, objects_or_images, image_name, object_name, prefix_image, unique_key):
-	return 'SaveImages:[module_num:{module_num}|svn_version:\'Unknown\'|variable_revision_number:11|show_window:False|notes:\x5B\x5D|batch_state:array(\x5B\x5D, dtype=uint8)|enabled:True|wants_pause:False]\n\
+def SaveImages(module_num, objects_or_images, image_name, object_name, prefix_image, unique_key, show_window=False):
+	return 'SaveImages:[module_num:{module_num}|svn_version:\'Unknown\'|variable_revision_number:11|show_window:{show_window}|notes:\x5B\x5D|batch_state:array(\x5B\x5D, dtype=uint8)|enabled:True|wants_pause:False]\n\
 					Select the type of image to save:{objects_or_images}\n\
 					Select the image to save:{image_name}\n\
 					Select the objects to save:{object_name}\n\
@@ -302,7 +316,8 @@ def SaveImages(module_num, objects_or_images, image_name, object_name, prefix_im
 					Record the file and path information to the saved image?:No\n\
 					Create subfolders in the output folder?:No\n\
 					Base image folder:Elsewhere...|\n\
-					Saved movie format:avi\n\n'.format(module_num=module_num,
+					Saved movie format:avi\n\n'.format(show_window=show_window,
+																						 module_num=module_num,
 																						 objects_or_images=objects_or_images,
 																						 image_name=image_name,
 																						 object_name=object_name,

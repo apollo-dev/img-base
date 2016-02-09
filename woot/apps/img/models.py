@@ -209,6 +209,10 @@ class Composite(models.Model):
 			mgfp_gon = self.gons.get(t=t, channel__name='-mgfp')
 			mgfp = exposure.rescale_intensity(mgfp_gon.load() * 1.0)
 
+			if len(mgfp.shape)>2:
+				if mgfp.shape[2]>1:
+					mgfp = mgfp[:,:,0]
+
 			# mix
 			bfgfp = mgfp * (1.0 - bf_ratio) + zbf * bf_ratio
 
@@ -486,7 +490,7 @@ class Channel(models.Model):
 
 		return unique, unique_key, marker_channel_primary_name
 
-	def segment(self, pipeline=None, marker_channel_name='-zunique'):
+	def segment(self, unique, unique_key, pipeline=None, marker_channel_name='-zunique'):
 
 		if pipeline is None:
 			unique, unique_key, marker_channel_primary_name = self.segment_setup()
