@@ -4,6 +4,14 @@
 Text representation of a cell profiler pipeline that can be used to modify data processing.
 '''
 
+def prototype_pipeline(experiment_prefix, unique_key, primary_channel_name, secondary_channel_name):
+	pipeline = ''
+	pipeline += Header(2)
+	pipeline += LoadImages(1, primary_channel_name, 'Images', 'Primary', 'ObjectName', 'OutlineName')
+	pipeline += LoadImages(2, secondary_channel_name, 'Images', 'Secondary', 'ObjectName', 'OutlineName')
+
+	return pipeline
+
 def marker_pipeline(experiment_prefix, unique_key, primary_channel_name, secondary_channel_name, threshold_correction_factor=1.2, background=True):
 
 	pipeline = ''
