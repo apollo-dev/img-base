@@ -123,6 +123,10 @@ class Experiment(models.Model):
 		else:
 			return None, False, 'does not match template.'
 
+	def generate_prototype_pipeline(self, series_name=None, primary_channel_name=None, secondary_channel_name=None, unique='', unique_key=''):
+
+		
+
 	def save_marker_pipeline(self, series_name=None, primary_channel_name=None, secondary_channel_name=None, threshold_correction_factor=1.2, background=True, unique='', unique_key=''):
 
 		# format and save file
