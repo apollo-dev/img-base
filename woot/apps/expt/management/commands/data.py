@@ -79,11 +79,11 @@ class Command(BaseCommand):
 
 			# tile
 			print('creating tile...')
-			composite.create_tile(bfgfp_unique, side_channel='-bfgfp', main_channel='-mgfp', region_list=region_list)
+			composite.create_tile(bfgfp_unique, side_channel='-bfgfp', main_channel='-mgfp', region_list=[])
 
 			# export
 			print('exporting data...')
-			composite.series.export_data(bfgfp_unique, region_list=region_list)
+			composite.series.export_data(bfgfp_unique, region_list=[])
 
 		else:
 			print('Please enter an experiment')

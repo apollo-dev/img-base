@@ -292,6 +292,7 @@ class Composite(models.Model):
 					zbf = zbf[:,:,0]
 
 			gfp = exposure.rescale_intensity(self.gons.get(channel__name='0', t=t).load() * 1.0)
+			gfp = gf(gfp, sigma=3)
 
 			gfp_projection = np.max(gfp, axis=2) # z projection of the gfp
 
@@ -491,6 +492,8 @@ class Channel(models.Model):
 		return unique, unique_key, marker_channel_primary_name
 
 	def segment(self, unique, unique_key, pipeline=None, marker_channel_name='-zunique'):
+
+		marker_channel = self.composite.channels.get(name=marker_channel_name)
 
 		if pipeline is None:
 			unique, unique_key, marker_channel_primary_name = self.segment_setup()

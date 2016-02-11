@@ -46,26 +46,19 @@ class Command(BaseCommand):
 		make_option('--r', # option that will appear in cmd
 			action='store', # no idea
 			dest='r', # refer to this in options variable
-			default=5, # some default
+			default='3', # some default
 		),
 
 		make_option('--sigma', # option that will appear in cmd
 			action='store', # no idea
 			dest='sigma', # refer to this in options variable
-			default=5, # some default
+			default='3', # some default
 		),
 
 		make_option('--dz', # option that will appear in cmd
 			action='store', # no idea
 			dest='dz', # refer to this in options variable
-			default=-8, # some default
-		),
-
-		make_option('--region', # option that will appear in cmd
-			action='store', # no idea
-			dest='region', # refer to this in options variable
-			default='', # some default
-			help='Name of the series' # who cares
+			default='-8', # some default
 		),
 
 		make_option('--bf_ratio', # option that will appear in cmd

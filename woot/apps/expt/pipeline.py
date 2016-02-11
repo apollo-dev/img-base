@@ -6,12 +6,14 @@ Text representation of a cell profiler pipeline that can be used to modify data 
 
 def prototype_pipeline(img_path, experiment_prefix, unique_key, primary_channel_name, secondary_channel_name):
 	pipeline = ''
-	pipeline += Header(5)
+	pipeline += Header(7)
 	pipeline += LoadImages(1, primary_channel_name, 'Images', 'Primary', 'ObjectName', 'OutlineName', input_location=img_path, show_window=False)
 	pipeline += LoadImages(2, secondary_channel_name, 'Images', 'Secondary', 'ObjectName', 'OutlineName', input_location=img_path, show_window=False)
 	pipeline += IdentifyPrimaryObjects(3, 'Primary', 'Markers')
-	pipeline += ExportToSpreadsheet(4, experiment_prefix)
-	pipeline += SaveImages(5, 'Objects', 'ImageName', 'Cells', 'Secondary', unique_key)
+	pipeline += IdentifySecondaryObjects(4, 'Markers', 'Cells', 'Secondary', 'OutlineName', threshold_correction_factor=1.0, background=True, show_window=True)
+	pipeline += MeasureObjectSizeShape(5, 'Cells')
+	pipeline += ExportToSpreadsheet(6, experiment_prefix)
+	pipeline += SaveImages(7, 'Objects', 'ImageName', 'Cells', 'Secondary', unique_key)
 
 	return pipeline
 
