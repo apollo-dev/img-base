@@ -547,6 +547,10 @@ class Channel(models.Model):
 
 			t_data = list(filter(lambda d: int(d['ImageNumber'])-1==t, data))
 
+			# remove previous masks with the same unique key
+			self.composite.cell_masks.all().delete()
+
+			# create new masks
 			markers = marker_channel.markers.filter(track_instance__t=t)
 			for marker in markers:
 				# 1. create cell
