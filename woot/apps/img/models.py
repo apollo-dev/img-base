@@ -514,7 +514,7 @@ class Channel(models.Model):
 		mask_channel = self.composite.mask_channels.create(name=unique_key)
 
 		# delete previous masks
-		mask_channel.masks.all().delete()
+		self.masks.filter(channel__name__contains=unique).delete()
 
 		region_mask_channel = None
 		if self.composite.mask_channels.all() and self.composite.current_region_unique:
