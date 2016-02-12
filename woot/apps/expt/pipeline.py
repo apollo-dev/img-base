@@ -45,7 +45,7 @@ def LoadImages(module_num, channel_name, objects_or_images, image_name, object_n
 	return 'LoadImages:[module_num:{module_num}|svn_version:\'Unknown\'|variable_revision_number:11|show_window:False|notes:\x5B\x5D|batch_state:array(\x5B\x5D, dtype=uint8)|enabled:True|wants_pause:False]\n\
 					File type to be loaded:individual images\n\
 					File selection method:Text-Regular expressions\n\
-					Number of images in each group?:3\n\
+					Number of images in each group?:2\n\
 					Type the text that the excluded images have in common:Do not use\n\
 					Analyze all subfolders within the selected folder?:None\n\
 					Input image file location:Default Input Folder\x7C\n\

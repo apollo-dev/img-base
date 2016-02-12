@@ -50,9 +50,6 @@ class Command(BaseCommand):
 		# vars
 		experiment_name = options['expt']
 		series_name = options['series']
-		region_list = options['region'].split(',')
-		if region_list==['']:
-			region_list = []
 		threshold_correction_factor = float(options['threshold'])
 
 		if experiment_name!='' and series_name!='':
