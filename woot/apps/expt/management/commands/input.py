@@ -15,6 +15,7 @@ from os.path import join, exists
 from optparse import make_option
 from subprocess import call
 import shutil as sh
+from scipy.misc import imsave
 
 spacer = ' ' *	20
 
@@ -169,10 +170,15 @@ class Command(BaseCommand):
 			composite = series.compose() if series.composites.count()==0 else series.composites.get()
 
 			# 6. make zmod channels
-			composite.create_zmod(R=R, delta_z=dz, sigma=sigma)
-			composite.create_tracking()
+			# composite.create_zmod(R=R, delta_z=dz, sigma=sigma)
+			# composite.create_tracking()
 			composite.create_max_gfp()
-			composite.create_bf_gfp(bf_ratio=bf_ratio)
+			# composite.create_bf_gfp(bf_ratio=bf_ratio)
+
+			# copy max gfp to tracking folder
+			for max_gfp_gon in composite.gons.filter(channel__name='-mgfp'):
+				mgfp = max_gfp_gon.load()[:,:,0]
+				imsave(join(composite.experiment.ij_path, series.name, '{}_s{}_tracking_t{}.tiff'.format(experiment.name, series.name, max_gfp_gon.t)), mgfp)
 
 		else:
 			print('input | Enter an experiment.')
