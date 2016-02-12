@@ -35,13 +35,6 @@ class Command(BaseCommand):
 			help='Name of the series' # who cares
 		),
 
-		make_option('--region', # option that will appear in cmd
-			action='store', # no idea
-			dest='region', # refer to this in options variable
-			default='', # some default
-			help='Name of the series' # who cares
-		),
-
 		make_option('--threshold', # option that will appear in cmd
 			action='store', # no idea
 			dest='threshold', # refer to this in options variable
@@ -113,38 +106,24 @@ class Command(BaseCommand):
 
 						print('step02 | processing marker ({}/{})... {} tracks, {} instances, {} markers'.format(i+1,len(data),composite.tracks.count(), composite.track_instances.count(), composite.markers.count()), end='\n' if i==len(data)-1 else '\r')
 
-			if composite.channels.filter(name='-bfgfp'):
-				# segment using the gfp channels only
-				bfgfp_channel = composite.channels.get(name='-bfgfp')
-				bfgfp_unique = bfgfp_channel.segment(threshold_correction_factor=threshold_correction_factor)
+			# segment
+			composite.create_zunique()
+			zunique_channel = composite.channels.get(name='-zunique')
 
-				# tile
-				print('creating tile...')
-				composite.create_tile(bfgfp_unique, side_channel='-bfgfp', main_channel='-mgfp', region_list=region_list)
+			zunique_unique = zunique_channel.segment()
+			zedge_channel = composite.create_zedge(channel_unique_override=zunique_unique)
+			zedge_unique = zedge_channel.segment(marker_channel_name='-zunique', threshold_correction_factor=threshold_correction_factor)
 
-				# export
-				print('exporting data...')
-				composite.series.export_data(bfgfp_unique, region_list=region_list)
+			composite.current_zedge_unique = zedge_unique
+			composite.save()
 
-			else:
-				# segment
-				composite.create_zunique()
-				zunique_channel = composite.channels.get(name='-zunique')
+			# tile
+			print('creating tile...')
+			composite.create_tile(composite.current_zedge_unique, region_list=region_list)
 
-				zunique_unique = zunique_channel.segment()
-				zedge_channel = composite.create_zedge(channel_unique_override=zunique_unique)
-				zedge_unique = zedge_channel.segment(marker_channel_name='-zunique', threshold_correction_factor=threshold_correction_factor)
-
-				composite.current_zedge_unique = zedge_unique
-				composite.save()
-
-				# tile
-				print('creating tile...')
-				composite.create_tile(composite.current_zedge_unique, region_list=region_list)
-
-				# export
-				print('exporting data...')
-				composite.series.export_data(composite.current_zedge_unique, region_list=region_list)
+			# export
+			print('exporting data...')
+			composite.series.export_data(composite.current_zedge_unique, region_list=region_list)
 
 		else:
 			print('Please enter an experiment')

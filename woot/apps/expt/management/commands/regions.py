@@ -98,10 +98,6 @@ class Command(BaseCommand):
 			for df_name in data_file_list:
 				print('step02 | data file {}... '.format(df_name), end='\r')
 				data_file, data_file_created, status = composite.get_or_create_data_file(composite.experiment.track_path, df_name)
-				if not data_file_created:
-					os.remove(data_file.url)
-					data_file.delete()
-					status = 'deleted.'
 				print('step02 | data file {}... {}'.format(df_name, status))
 
 			### MARKERS
