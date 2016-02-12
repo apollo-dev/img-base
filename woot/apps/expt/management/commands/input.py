@@ -170,7 +170,7 @@ class Command(BaseCommand):
 			composite = series.compose() if series.composites.count()==0 else series.composites.get()
 
 			# 6. make zmod channels
-			# composite.create_zmod(R=R, delta_z=dz, sigma=sigma)
+			composite.create_zmod(R=R, delta_z=dz, sigma=sigma)
 			# composite.create_tracking()
 			composite.create_max_gfp()
 			# composite.create_bf_gfp(bf_ratio=bf_ratio)
