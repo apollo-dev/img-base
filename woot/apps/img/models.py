@@ -511,10 +511,10 @@ class Channel(models.Model):
 		# make new channel that gets put in mask path
 		cp_template = self.composite.templates.get(name='cp')
 		mask_template = self.composite.templates.get(name='mask')
-		mask_channel = self.composite.mask_channels.create(name=unique_key)
+		mask_channel, mask_channel_created = self.composite.mask_channels.get_or_create(name=unique_key)
 
 		# delete previous masks
-		self.masks.filter(channel__name__contains=unique).delete()
+		self.composite.masks.filter(channel__name__contains=unique).delete()
 
 		region_mask_channel = None
 		if self.composite.mask_channels.all() and self.composite.current_region_unique:
