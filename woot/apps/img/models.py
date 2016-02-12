@@ -512,6 +512,10 @@ class Channel(models.Model):
 		cp_template = self.composite.templates.get(name='cp')
 		mask_template = self.composite.templates.get(name='mask')
 		mask_channel = self.composite.mask_channels.create(name=unique_key)
+
+		# delete previous masks
+		mask_channel.masks.all().delete()
+
 		region_mask_channel = None
 		if self.composite.mask_channels.all() and self.composite.current_region_unique:
 			region_mask_channel = self.composite.mask_channels.get(name__contains=self.composite.current_region_unique)
@@ -531,6 +535,9 @@ class Channel(models.Model):
 		cell_data_file = self.composite.data_files.get(id_token=unique, data_type='Cells')
 		data = cell_data_file.load()
 
+		# remove previous masks with the same unique key
+		self.composite.series.cell_masks.filter().delete()
+
 		# load masks and associate with grayscale id's
 		for t in range(self.composite.series.ts):
 			mask_mask = mask_channel.masks.get(t=t)
@@ -546,9 +553,6 @@ class Channel(models.Model):
 				region_mask = region_mask_mask.load()
 
 			t_data = list(filter(lambda d: int(d['ImageNumber'])-1==t, data))
-
-			# remove previous masks with the same unique key
-			self.composite.series.cell_masks.all().delete()
 
 			# create new masks
 			markers = marker_channel.markers.filter(track_instance__t=t)
