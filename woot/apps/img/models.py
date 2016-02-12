@@ -175,7 +175,7 @@ class Composite(models.Model):
 			# load gfp
 			gfp_gon = self.gons.get(t=t, channel__name='0')
 			gfp = exposure.rescale_intensity(gfp_gon.load() * 1.0)
-			gfp = gf(gfp, sigma=2) # <<< SMOOTHING
+			# gfp = gf(gfp, sigma=0) # <<< SMOOTHING
 
 			# images to channel gons
 			max_gfp_gon, max_gfp_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=max_gfp_channel, t=t)
