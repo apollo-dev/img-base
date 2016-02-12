@@ -43,12 +43,6 @@ class Command(BaseCommand):
 			help='Name of the .lif archive' # who cares
 		),
 
-		make_option('--gfp', # option that will appear in cmd
-			action='store_true', # no idea
-			dest='use_gfp', # refer to this in options variable
-			default=False, # some default
-		),
-
 		make_option('--r', # option that will appear in cmd
 			action='store', # no idea
 			dest='r', # refer to this in options variable
@@ -74,13 +68,6 @@ class Command(BaseCommand):
 			help='Name of the series' # who cares
 		),
 
-		make_option('--bf_ratio', # option that will appear in cmd
-			action='store', # no idea
-			dest='bf_ratio', # refer to this in options variable
-			default='0.1', # some default
-			help='Name of the series' # who cares
-		),
-
 	)
 
 	args = ''
@@ -94,10 +81,6 @@ class Command(BaseCommand):
 		R = int(options['r'])
 		sigma = int(options['sigma'])
 		dz = int(options['dz'])
-		region_list = options['region'].split(',')
-		bf_ratio = float(options['bf_ratio'])
-		if region_list==['']:
-			region_list = []
 		data_root = settings.DATA_ROOT
 		lif_root = settings.LIF_ROOT
 		bfconvert_path = join(data_root, 'bftools', 'bfconvert')
@@ -188,19 +171,6 @@ class Command(BaseCommand):
 			composite.create_zmod(R=R, delta_z=dz, sigma=sigma)
 			composite.create_zunique()
 			composite.create_tracking()
-
-			# 8. make gfp channels if requested
-			if options['use_gfp']:
-				# 8. make max gfp channels
-				if composite.channels.filter(name='-mgfp').count()==0:
-					composite.create_max_gfp()
-				else:
-					if composite.channels.get(name='-mgfp').gons.count()==0:
-						composite.create_max_gfp()
-					else:
-						print('step01 | mgfp already exists...')
-
-				composite.create_bf_gfp(bf_ratio=bf_ratio)
 
 		else:
 			print('input | Enter an experiment.')
