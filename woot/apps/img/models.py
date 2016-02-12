@@ -231,6 +231,10 @@ class Composite(models.Model):
 			zbf = exposure.rescale_intensity(self.gons.get(channel__name='-zbf', t=t).load() * 1.0)
 			zedge = zbf.copy()
 
+			if len(zedge.shape)>2:
+				if zedge.shape[2]>1:
+					zedge = zedge[:,:,0]
+
 			binary_mask = zunique_mask>0
 			outside_edge = distance_transform_edt(dilate(edge_image(binary_mask), iterations=4))
 			outside_edge = 1.0 - exposure.rescale_intensity(outside_edge * 1.0)
@@ -260,6 +264,10 @@ class Composite(models.Model):
 				zunique[zmod==unique] = np.max(zmean[zmod==unique]) / np.sum(zmean)
 
 			zunique = gf(zunique, sigma=3)
+
+			if len(zunique.shape)>2:
+				if zunique.shape[2]>1:
+					zunique = zunique[:,:,0]
 
 			zunique_gon, zunique_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=zunique_channel, t=t)
 			zunique_gon.set_origin(0,0,0,t)

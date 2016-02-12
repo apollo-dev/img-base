@@ -71,10 +71,6 @@ class Command(BaseCommand):
 			for df_name in data_file_list:
 				print('step02 | data file {}... '.format(df_name), end='\r')
 				data_file, data_file_created, status = composite.get_or_create_data_file(composite.experiment.track_path, df_name)
-				if not data_file_created:
-					os.remove(data_file.url)
-					data_file.delete()
-					status = 'deleted.'
 				print('step02 | data file {}... {}'.format(df_name, status))
 
 			for data_file in composite.data_files.filter(data_type='markers'):
@@ -104,7 +100,6 @@ class Command(BaseCommand):
 						print('step02 | processing marker ({}/{})... {} tracks, {} instances, {} markers'.format(i+1,len(data),composite.tracks.count(), composite.track_instances.count(), composite.markers.count()), end='\n' if i==len(data)-1 else '\r')
 
 			# segment
-			composite.create_zunique()
 			zunique_channel = composite.channels.get(name='-zunique')
 
 			zunique_unique = zunique_channel.segment()
@@ -116,11 +111,11 @@ class Command(BaseCommand):
 
 			# tile
 			print('creating tile...')
-			composite.create_tile(composite.current_zedge_unique, region_list=region_list)
+			composite.create_tile(composite.current_zedge_unique, region_list=[])
 
 			# export
 			print('exporting data...')
-			composite.series.export_data(composite.current_zedge_unique, region_list=region_list)
+			composite.series.export_data(composite.current_zedge_unique, region_list=[])
 
 		else:
 			print('Please enter an experiment')
