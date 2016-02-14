@@ -63,6 +63,9 @@ class Command(BaseCommand):
 		# 1. vars
 		experiment_name = options['expt']
 		series_name = options['series']
+		R = int(options['r'])
+		sigma = int(options['sigma'])
+		dz = int(options['dz'])
 
 		# 2. fail without experiment name or series name
 		if experiment_name and series_name:
