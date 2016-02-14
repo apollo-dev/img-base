@@ -300,7 +300,7 @@ class Composite(models.Model):
 			gfp_projection = np.max(gfp, axis=2) # z projection of the gfp
 			gfp_projection = gf(gfp_projection, sigma=1)
 
-			tracking_img = gfp_projection * 0.3 + zbf * 0.7
+			tracking_img = gfp_projection * 0.5 + zbf * 0.5
 
 			tracking_gon, tracking_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=tracking_channel, t=t)
 			tracking_gon.set_origin(0,0,0,t)
