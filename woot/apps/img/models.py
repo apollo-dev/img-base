@@ -298,7 +298,7 @@ class Composite(models.Model):
 			gfp = exposure.rescale_intensity(self.gons.get(channel__name='0', t=t).load() * 1.0)
 
 			gfp_projection = np.max(gfp, axis=2) # z projection of the gfp
-			gfp_projection = gf(gfp_projection, sigma=2)
+			gfp_projection = gf(gfp_projection, sigma=1)
 
 			tracking_img = gfp_projection * 0.3 + zbf * 0.7
 
