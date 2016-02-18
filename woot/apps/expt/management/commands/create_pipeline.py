@@ -101,5 +101,25 @@ class Command(BaseCommand):
 
 			experiment.generate_prototype_pipeline(series_name=series.name, primary_channel_name=marker_channel_primary_name, secondary_channel_name=bfgfp_channel.name, unique=unique, unique_key=unique_key)
 
+			# output useful files
+			run_path = join(experiment.base_path, 'run', series.name)
+			if not exists(run_path):
+				os.makedirs(run_path)
+
+			if not exists(join(run_path, 'mgfp')):
+				os.mkdir(join(run_path, 'mgfp'))
+
+			if not exists(join(run_path, 'primary')):
+				os.mkdir(join(run_path, 'primary'))
+
+			for t in range(series.ts):
+				# load images
+				mgfp_path = composite.gons.get(channel__name='-mgfp', t=t).paths.all()[0]
+				primary_path = composite.gons.get(channel__name__contains='-primary', t=t).paths.all()[0]
+
+				sh.copy2(mgfp_path.url, join(run_path, 'mgfp', mgfp_path.file_name))
+				sh.copy2(primary_path.url, join(run_path, 'primary', primary_path.file_name))
+				sh.copy2(join(experiment.pipeline_path, 'prototype.cppipe'), join(run_path, 'prototype.cppipe'))
+
 		else:
 			print('Please enter an experiment')
