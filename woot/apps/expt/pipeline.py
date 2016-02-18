@@ -55,6 +55,7 @@ def Header(module_count):
 					HasImagePlaneDetails:False\n\n'.format(module_count=module_count)
 
 def LoadImages(module_num, channel_name, objects_or_images, image_name, object_name, outline_name, input_location=None, show_window=False):
+	input_location = None
 	input_file_location = 'Elsewhere...\x7C{}'.format(input_location) if input_location is not None else 'Default Input Folder\x7C'
 
 	return 'LoadImages:[module_num:{module_num}|svn_version:\'Unknown\'|variable_revision_number:11|show_window:{show_window}|notes:\x5B\x5D|batch_state:array(\x5B\x5D, dtype=uint8)|enabled:True|wants_pause:False]\n\

@@ -41,13 +41,6 @@ class Command(BaseCommand):
 			default='', # some default
 			help='Name of the series' # who cares
 		),
-
-		make_option('--unique_key', # option that will appear in cmd
-			action='store', # no idea
-			dest='unique_key', # refer to this in options variable
-			default='', # some default
-			help='Name of the series' # who cares
-		),
 	)
 
 	args = ''
@@ -58,8 +51,8 @@ class Command(BaseCommand):
 		experiment_name = options['expt']
 		series_name = options['series']
 		pipeline = options['pipeline']
-		unique_key = options['unique_key']
-		unique = unique_key.split('-')[-1]
+		unique_key = '_cp-zunique-bfgfp-UNIQUEUK'
+		unique = 'UNIQUE'
 
 		if experiment_name!='' and series_name!='':
 			experiment = Experiment.objects.get(name=experiment_name)

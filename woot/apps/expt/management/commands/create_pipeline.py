@@ -101,10 +101,5 @@ class Command(BaseCommand):
 
 			experiment.generate_prototype_pipeline(series_name=series.name, primary_channel_name=marker_channel_primary_name, secondary_channel_name=bfgfp_channel.name, unique=unique, unique_key=unique_key)
 
-			print('1. In first LoadImages (primary objects), change image text to {}'.format('s{}_ch{}_'.format(series_name,  marker_channel_primary_name)))
-			print('2. In second LoadImages (secondary images), change image text to {}'.format('s{}_ch{}_'.format(series_name, bfgfp_channel.name)))
-			print('3. In ExportToSpreadsheet, change file prefix to: {}'.format('{}_s{}_{}_'.format(experiment.name, series.name, unique)))
-			print('4. In SaveImages, change prefix to (unique key): _cp{}'.format(unique_key))
-
 		else:
 			print('Please enter an experiment')
