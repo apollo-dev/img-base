@@ -507,6 +507,8 @@ class Channel(models.Model):
 
 		print('import masks')
 		# 3. import masks and create new mask channel
+		print(unique_key)
+		print([f for f in os.listdir(self.composite.experiment.cp_path) if ('.tiff' in f)])
 		cp_out_file_list = [f for f in os.listdir(self.composite.experiment.cp_path) if (unique_key in f and '.tiff' in f)]
 		print(cp_out_file_list)
 		# make new channel that gets put in mask path
