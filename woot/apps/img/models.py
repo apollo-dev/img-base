@@ -487,7 +487,7 @@ class Channel(models.Model):
 
 		# 1. create primary from markers with marker_channel
 		print('running primary')
-		marker_channel_primary_name = marker_channel.primary(unique=unique)
+		marker_channel_primary_name = marker_channel.primary()
 
 		return unique, unique_key, marker_channel_primary_name
 
@@ -752,12 +752,12 @@ class Channel(models.Model):
 
 		return gon, gon_created
 
-	def primary(self, unique=''):
+	def primary(self):
 		if self.markers.count()!=0:
 			channel_name = ''
 
 			# 1. loop through time series
-			marker_channel, marker_channel_created = self.composite.channels.get_or_create(name='{}-primary-{}'.format(self.name, unique))
+			marker_channel, marker_channel_created = self.composite.channels.get_or_create(name='{}-primary'.format(self.name))
 
 			for t in range(self.composite.series.ts):
 				print('primary for composite {} {} {} channel {} | t{}/{}'.format(self.composite.experiment.name, self.composite.series.name, self.composite.id_token, self.name, t+1, self.composite.series.ts), end='\n' if t==self.composite.series.ts-1 else '\r')
