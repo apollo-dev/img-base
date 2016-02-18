@@ -96,7 +96,7 @@ class Command(BaseCommand):
 						print('step02 | processing marker ({}/{})... {} tracks, {} instances, {} markers'.format(i+1,len(data),composite.tracks.count(), composite.track_instances.count(), composite.markers.count()), end='\n' if i==len(data)-1 else '\r')
 
 			# segment using the gfp channels only
-			bfgfp_channel = composite.channels.get(name='-bfgfp')
+			bfgfp_channel = composite.channels.get(name='-mgfp')
 			unique, unique_key, marker_channel_primary_name = bfgfp_channel.segment_setup()
 
 			experiment.generate_prototype_pipeline(series_name=series.name, primary_channel_name=marker_channel_primary_name, secondary_channel_name=bfgfp_channel.name, unique=unique, unique_key=unique_key)
