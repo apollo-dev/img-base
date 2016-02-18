@@ -67,12 +67,12 @@ class Command(BaseCommand):
 			composite = series.composites.get()
 
 			# segment using the gfp channels only
-			bfgfp_channel = composite.channels.get(name='-bfgfp')
+			bfgfp_channel = composite.channels.get(name='-mgfp')
 			bfgfp_unique = bfgfp_channel.segment(unique, unique_key, pipeline=pipeline)
 
 			# tile
 			print('creating tile...')
-			composite.create_tile(bfgfp_unique, side_channel='-bfgfp', main_channel='-mgfp', region_list=[])
+			composite.create_tile(bfgfp_unique, side_channel='-mgfp', main_channel='-mgfp', region_list=[])
 
 			# export
 			print('exporting data...')
