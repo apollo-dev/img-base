@@ -478,8 +478,8 @@ class Channel(models.Model):
 		return '{} > {}'.format(self.composite.id_token, self.name)
 
 	def segment_setup(self, marker_channel_name='-zunique'):
-		unique = random_string() # defines a single identifier for this run
-		unique_key = '{}{}-{}'.format(marker_channel_name, self.name, unique)
+		unique = 'UNIQUE' # defines a single identifier for this run
+		unique_key = '{}{}-{}UK'.format(marker_channel_name, self.name, unique)
 
 		# setup
 		print('getting marker channel')
