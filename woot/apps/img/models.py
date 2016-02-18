@@ -508,10 +508,12 @@ class Channel(models.Model):
 		print('import masks')
 		# 3. import masks and create new mask channel
 		cp_out_file_list = [f for f in os.listdir(self.composite.experiment.cp_path) if (unique_key in f and '.tiff' in f)]
+		print(cp_out_file_list)
 		# make new channel that gets put in mask path
 		cp_template = self.composite.templates.get(name='cp')
 		mask_template = self.composite.templates.get(name='mask')
 		mask_channel, mask_channel_created = self.composite.mask_channels.get_or_create(name=unique_key)
+		print(mask_channel)
 
 		# delete previous masks
 		self.composite.masks.filter(channel__name__contains=unique).delete()
