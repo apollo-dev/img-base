@@ -46,13 +46,13 @@ class Command(BaseCommand):
 		make_option('--r', # option that will appear in cmd
 			action='store', # no idea
 			dest='r', # refer to this in options variable
-			default=5, # some default
+			default=3, # some default
 		),
 
 		make_option('--sigma', # option that will appear in cmd
 			action='store', # no idea
 			dest='sigma', # refer to this in options variable
-			default=5, # some default
+			default=3, # some default
 		),
 
 		make_option('--dz', # option that will appear in cmd
@@ -110,7 +110,7 @@ class Command(BaseCommand):
 				print('input | series {}... already exists.'.format(series_name))
 
 			# 6. extract lif if necessary
-			if len(os.listdir(experiment.storage_path))==0:
+			if len([f for f in os.listdir(experiment.storage_path) if '_s{}_'.format(series.name) in f])==0:
 
 				# extract lif
 				lif_path = join(lif_root, lif_name)
@@ -118,7 +118,7 @@ class Command(BaseCommand):
 
 				# run extract
 				print('input | Extracting lif...')
-				call('{} {} {}'.format(bfconvert_path, lif_path, lif_template), shell=True)
+				call('{} -series {} {} {}'.format(bfconvert_path, series.name, lif_path, lif_template), shell=True)
 
 			else:
 				print('input | .lif already extracted for experiment {}, series {}; continuing... '.format(experiment_name, series_name))
@@ -160,7 +160,6 @@ class Command(BaseCommand):
 					print('step01 | no files found in {}'.format(root))
 
 			# 4a. correct series metadata if necessary
-			series.ts = max(series.paths.all(), key=lambda p: p.t).t + 1
 			series.save()
 
 			# 5. composite

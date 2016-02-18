@@ -36,24 +36,6 @@ class Command(BaseCommand):
 			help='Name of the series' # who cares
 		),
 
-		make_option('--r', # option that will appear in cmd
-			action='store', # no idea
-			dest='r', # refer to this in options variable
-			default=3, # some default
-		),
-
-		make_option('--sigma', # option that will appear in cmd
-			action='store', # no idea
-			dest='sigma', # refer to this in options variable
-			default=3, # some default
-		),
-
-		make_option('--dz', # option that will appear in cmd
-			action='store', # no idea
-			dest='dz', # refer to this in options variable
-			default=-8, # some default
-		),
-
 	)
 
 	args = ''
@@ -63,9 +45,6 @@ class Command(BaseCommand):
 		# 1. vars
 		experiment_name = options['expt']
 		series_name = options['series']
-		R = int(options['r'])
-		sigma = int(options['sigma'])
-		dz = int(options['dz'])
 
 		# 2. fail without experiment name or series name
 		if experiment_name and series_name:
@@ -75,8 +54,13 @@ class Command(BaseCommand):
 			series = experiment.series.get(name=series_name)
 			composite = series.composites.get()
 
-			# 6. make zmod channels
-			composite.create_zmod(R=R, delta_z=dz, sigma=sigma)
+			# 4. export, zmean, primary and zbf into {expt}/run/{series_name}
+			run_path = join(experiment.base_path, 'run', series.name)
+
+			for t in range(series.ts):
+				zbf = exposure.rescale_intensity(composite.gons.get(channel__name='-zbf', t=t).load() * 1.0)
+				zvar = exposure.rescale_intensity(composite.gons.get(channel__name='-zmean', t=t).load() * 1.0)
+				
 
 		else:
 			print('input | Enter an experiment.')

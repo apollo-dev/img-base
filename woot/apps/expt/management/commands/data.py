@@ -100,11 +100,11 @@ class Command(BaseCommand):
 						print('step02 | processing marker ({}/{})... {} tracks, {} instances, {} markers'.format(i+1,len(data),composite.tracks.count(), composite.track_instances.count(), composite.markers.count()), end='\n' if i==len(data)-1 else '\r')
 
 			# segment
-			zunique_channel = composite.channels.get(name='-zunique')
+			zunique_channel = composite.channels.get(name='-zbf')
 
-			zunique_unique = zunique_channel.segment()
-			zedge_channel = composite.create_zedge(channel_unique_override=zunique_unique)
-			zedge_unique = zedge_channel.segment(marker_channel_name='-zunique', threshold_correction_factor=threshold_correction_factor)
+			# zunique_unique = zunique_channel.segment()
+			# zedge_channel = composite.create_zedge(channel_unique_override=zunique_unique)
+			zedge_unique = zunique_channel.segment(marker_channel_name='-zunique', threshold_correction_factor=threshold_correction_factor)
 
 			composite.current_zedge_unique = zedge_unique
 			composite.save()
