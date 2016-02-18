@@ -65,7 +65,14 @@ class Command(BaseCommand):
 		make_option('--bf_ratio', # option that will appear in cmd
 			action='store', # no idea
 			dest='bf_ratio', # refer to this in options variable
-			default='0.1', # some default
+			default='0.0', # some default
+			help='Name of the series' # who cares
+		),
+
+		make_option('--gfp_sigma', # option that will appear in cmd
+			action='store', # no idea
+			dest='gfp_sigma', # refer to this in options variable
+			default='0.0', # some default
 			help='Name of the series' # who cares
 		),
 
@@ -83,6 +90,7 @@ class Command(BaseCommand):
 		sigma = int(options['sigma'])
 		dz = int(options['dz'])
 		bf_ratio = float(options['bf_ratio'])
+		gfp_sigma = float(options['gfp_sigma'])
 		data_root = settings.DATA_ROOT
 		lif_root = settings.LIF_ROOT
 		bfconvert_path = join(data_root, 'bftools', 'bfconvert')
@@ -172,7 +180,7 @@ class Command(BaseCommand):
 			# 6. make zmod channels
 			composite.create_zmod(R=R, delta_z=dz, sigma=sigma)
 			# composite.create_tracking()
-			composite.create_max_gfp()
+			composite.create_max_gfp(bf_ratio=bf_ratio, sigma=gfp_sigma)
 			# composite.create_bf_gfp(bf_ratio=bf_ratio)
 
 			# copy max gfp to tracking folder

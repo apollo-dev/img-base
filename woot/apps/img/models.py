@@ -161,7 +161,7 @@ class Composite(models.Model):
 			bmod_gon.save_array(self.series.experiment.composite_path, template)
 			bmod_gon.save()
 
-	def create_max_gfp(self):
+	def create_max_gfp(self, bf_ratio=0.0, sigma=0.0):
 		# template
 		template = self.templates.get(name='source') # SOURCE TEMPLATE
 
@@ -175,14 +175,24 @@ class Composite(models.Model):
 			# load gfp
 			gfp_gon = self.gons.get(t=t, channel__name='0')
 			gfp = exposure.rescale_intensity(gfp_gon.load() * 1.0)
-			# gfp = gf(gfp, sigma=0) # <<< SMOOTHING
+			gfp = gf(gfp, sigma=sigma) # <<< SMOOTHING
+
+			# load bf
+			zbf = 1.0
+			if bf_ratio > 0.0:
+				zbf_gon = self.gons.get(t=t, channel__name='-zbf')
+				zbf = exposure.rescale_intensity(zbf_gon.load() * 1.0)
+
+				if len(zbf.shape)>2:
+					if zbf.shape[2]>1:
+						zbf = zbf[:,:,0]
 
 			# images to channel gons
 			max_gfp_gon, max_gfp_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=max_gfp_channel, t=t)
 			max_gfp_gon.set_origin(0,0,0,t)
 			max_gfp_gon.set_extent(self.series.rs, self.series.cs, 1)
 
-			max_gfp_gon.array = np.max(gfp, axis=2)
+			max_gfp_gon.array = np.max(gfp, axis=2) * (1.0 - bf_ratio) + zbf * bf_ratio
 			max_gfp_gon.save_array(self.series.experiment.composite_path, template)
 			max_gfp_gon.save()
 
@@ -507,15 +517,11 @@ class Channel(models.Model):
 
 		print('import masks')
 		# 3. import masks and create new mask channel
-		print(unique_key)
-		print([f for f in os.listdir(self.composite.experiment.cp_path) if ('.tiff' in f)])
 		cp_out_file_list = [f for f in os.listdir(self.composite.experiment.cp_path) if (unique_key in f and '.tiff' in f)]
-		print(cp_out_file_list)
 		# make new channel that gets put in mask path
 		cp_template = self.composite.templates.get(name='cp')
 		mask_template = self.composite.templates.get(name='mask')
 		mask_channel, mask_channel_created = self.composite.mask_channels.get_or_create(name=unique_key)
-		print(mask_channel)
 
 		# delete previous masks
 		self.composite.masks.filter(channel__name__contains=unique).delete()
