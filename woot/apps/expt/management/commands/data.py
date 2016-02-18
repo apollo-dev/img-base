@@ -51,8 +51,8 @@ class Command(BaseCommand):
 		experiment_name = options['expt']
 		series_name = options['series']
 		pipeline = options['pipeline']
-		unique_key = '_cp-zunique-bfgfp-UNIQUEUK'
-		unique = 'UNIQUE'
+		unique_key = '_cp-zunique-bfgfp-UNIQUE00'
+		unique = 'UNIQUE00'
 
 		if experiment_name!='' and series_name!='':
 			experiment = Experiment.objects.get(name=experiment_name)
