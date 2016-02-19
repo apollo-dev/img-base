@@ -184,6 +184,9 @@ class Command(BaseCommand):
 			# composite.create_bf_gfp(bf_ratio=bf_ratio)
 
 			# copy max gfp to tracking folder
+			if not exists(join(composite.experiment.ij_path, series.name)):
+				os.makedirs(join(composite.experiment.ij_path, series.name))
+
 			for max_gfp_gon in composite.gons.filter(channel__name='-mgfp'):
 				mgfp = max_gfp_gon.load()
 				if len(mgfp.shape)>2:
