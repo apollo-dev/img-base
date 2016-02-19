@@ -185,7 +185,11 @@ class Command(BaseCommand):
 
 			# copy max gfp to tracking folder
 			for max_gfp_gon in composite.gons.filter(channel__name='-mgfp'):
-				mgfp = max_gfp_gon.load()[:,:,0]
+				mgfp = max_gfp_gon.load()
+				if len(mgfp.shape)>2:
+					if mgfp.shape[2]>1:
+						mgfp = mgfp[:,:,0]
+
 				imsave(join(composite.experiment.ij_path, series.name, '{}_s{}_tracking_t{}.tiff'.format(experiment.name, series.name, str_value(max_gfp_gon.t, series.ts))), mgfp)
 
 		else:
