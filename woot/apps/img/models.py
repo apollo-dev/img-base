@@ -295,12 +295,18 @@ class Composite(models.Model):
 				if zbf.shape[2]>1:
 					zbf = zbf[:,:,0]
 
-			gfp = exposure.rescale_intensity(self.gons.get(channel__name='0', t=t).load() * 1.0)
+			zvar = exposure.rescale_intensity(self.gons.get(channel__name='-zmean', t=t).load() * 1.0)
 
-			gfp_projection = np.max(gfp, axis=2) # z projection of the gfp
-			gfp_projection = gf(gfp_projection, sigma=1)
+			if len(zvar.shape)>2:
+				if zvar.shape[2]>1:
+					zvar = zvar[:,:,0]
 
-			tracking_img = gfp_projection * 0.5 + zbf * 0.5
+			# gfp = exposure.rescale_intensity(self.gons.get(channel__name='0', t=t).load() * 1.0)
+
+			# gfp_projection = np.max(gfp, axis=2) # z projection of the gfp
+			# gfp_projection = gf(gfp_projection, sigma=1)
+
+			tracking_img = zvar * 0.1 + zbf * 0.9
 
 			tracking_gon, tracking_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=tracking_channel, t=t)
 			tracking_gon.set_origin(0,0,0,t)
