@@ -591,7 +591,8 @@ class Channel(models.Model):
 							if region_instance is None and region_gray_value_id in gray_value_ids:
 								region_instance = ri
 
-				if gray_value_id!=0:
+				cell_mask_data = list(filter(lambda d: int(d['ObjectNumber'])==gray_value_id, t_data))
+				if gray_value_id!=0 and len(cell_mask_data)!=0:
 					cell_mask = cell_instance.masks.create(experiment=cell.experiment,
 																								 series=cell.series,
 																								 cell=cell,
@@ -602,8 +603,8 @@ class Channel(models.Model):
 																								 marker=marker,
 																								 gray_value_id=gray_value_id)
 
-					cell_mask_data = list(filter(lambda d: int(d['ObjectNumber'])==cell_mask.gray_value_id, t_data))[0]
-
+					cell_mask_data = cell_mask_data[0]
+					
 					# get z
 					zmod_mask = zmod[mask==cell_mask.gray_value_id]
 					average_z_position = int(zmod_mask.mean())
