@@ -517,7 +517,7 @@ class Channel(models.Model):
 
 		print('import masks')
 		# 3. import masks and create new mask channel
-		cp_out_file_list = [f for f in os.listdir(self.composite.experiment.cp_path) if (unique_key in f and '.tiff' in f)]
+		cp_out_file_list = [f for f in os.listdir(self.composite.experiment.cp_path) if ('s{}_'.format(self.composite.series.name) in f and unique_key in f and '.tiff' in f)]
 		# make new channel that gets put in mask path
 		cp_template = self.composite.templates.get(name='cp')
 		mask_template = self.composite.templates.get(name='mask')
@@ -604,7 +604,7 @@ class Channel(models.Model):
 																								 gray_value_id=gray_value_id)
 
 					cell_mask_data = cell_mask_data[0]
-					
+
 					# get z
 					zmod_mask = zmod[mask==cell_mask.gray_value_id]
 					average_z_position = int(zmod_mask.mean())
