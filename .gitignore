@@ -2,3 +2,5 @@
 *.pyc
 migrations/
 *.sqlite3
+
+*.png

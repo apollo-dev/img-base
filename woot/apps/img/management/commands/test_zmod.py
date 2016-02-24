@@ -41,7 +41,7 @@ class Command(BaseCommand):
 		make_option('--expt', # option that will appear in cmd
 			action='store', # no idea
 			dest='expt', # refer to this in options variable
-			default='260714', # some default
+			default='260714-test', # some default
 			help='Name of the experiment to import' # who cares
 		),
 
@@ -82,7 +82,8 @@ class Command(BaseCommand):
 
 			# load gfp
 			gfp_gon = composite.gons.get(t=t, channel__name='0')
-			gfp_start = exposure.rescale_intensity(gfp_gon.load() * 1.0)
+			gfp = exposure.rescale_intensity(gfp_gon.load() * 1.0)
+			gfp = gf(gfp, sigma=2) # <<< SMOOTHING
 			print('loaded gfp...')
 
 			# load bf
@@ -90,34 +91,22 @@ class Command(BaseCommand):
 			bf = exposure.rescale_intensity(bf_gon.load() * 1.0)
 			print('loaded bf...')
 
-			for sigma in [0, 5, 10, 20]:
-				gfp = gf(gfp_start, sigma=sigma) # <<< SMOOTHING
-				for level in range(gfp.shape[2]):
-					print('level {} {}...'.format(R, level))
-					gfp[:,:,level] = convolve(gfp[:,:,level], np.ones((R,R)))
+			gfp_max = np.max(gfp, axis=2)
 
-				# initialise images
-				Z = np.zeros(composite.series.shape(d=2), dtype=int)
-				Zmean = np.zeros(composite.series.shape(d=2))
-				Zbf = np.zeros(composite.series.shape(d=2))
+			# normalise
+			gfp_norm = np.rollaxis(gfp, 2).astype(float) / gfp_max.astype(float) # values are now normalised to 1.0
+			gfp_norm = np.rollaxis(gfp_norm, 0, 3)
 
-				Z = np.argmax(gfp, axis=2) + delta_z
+			# apply delta-z
+			gfp_norm = np.roll(gfp_norm, -10, axis=2)
 
-				# outliers
-				Z[Z<0] = 0
-				Z[Z>composite.series.zs-1] = composite.series.zs-1
+			# turn array into mask and apply to bf
+			bf_masked = np.zeros(gfp_norm.shape)
+			bf_masked[gfp_norm == 1] = bf[gfp_norm == 1]
+			zbf = np.sum(bf_masked, axis=2)
 
-				for level in range(bf.shape[2]):
-					print('level {}...'.format(level))
-					bf_level = bf[:,:,level]
-					Zbf[Z==level] = bf_level[Z==level]
-
-				Zmean = 1 - np.mean(gfp, axis=2) / np.max(gfp, axis=2)
-
-				imsave('zbf_R-{}_sigma-{}_delta_z{}.png'.format(R, sigma, delta_z), Zbf)
-
-			# plt.imshow(Zbf, cmap='Greys_r')
-			# plt.show()
+			plt.imshow(zbf, cmap='Greys_r')
+			plt.show()
 
 		else:
 			print('Please enter an experiment')
