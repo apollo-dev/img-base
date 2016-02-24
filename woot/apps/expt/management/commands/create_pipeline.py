@@ -115,7 +115,7 @@ class Command(BaseCommand):
 			for t in range(series.ts):
 				# load images
 				mgfp_path = composite.gons.get(channel__name='-mgfp', t=t).paths.all()[0]
-				primary_path = composite.gons.get(channel__name__contains='-primary', t=t).paths.all()[0]
+				primary_path = composite.gons.filter(channel__name__contains='-primary', t=t)[0].paths.all()[0]
 
 				sh.copy2(mgfp_path.url, join(run_path, 'mgfp', mgfp_path.file_name))
 				sh.copy2(primary_path.url, join(run_path, 'primary', primary_path.file_name))
