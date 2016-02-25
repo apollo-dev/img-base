@@ -179,6 +179,9 @@ class Command(BaseCommand):
 			# 	series.export_data()
 
 			# 6. Region tile
+			if not composite.channels.filter(name__contains='-zunique').count():
+				composite.create_zunique()
+				
 			composite.create_region_tile(unique)
 
 		else:
