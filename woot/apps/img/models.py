@@ -415,9 +415,9 @@ class Composite(models.Model):
 			os.makedirs(tile_path)
 
 		for t in range(self.series.ts):
-			zbf_gon = self.gons.get(t=t, channel__name=top_channel)
-			zcomp_gon = self.gons.get(t=t, channel__name=side_channel)
-			zmean_gon = self.gons.get(t=t, channel__name=main_channel)
+			zbf_gon = self.gons.get(t=t, channel__name=top_channel, z=0)
+			zcomp_gon = self.gons.get(t=t, channel__name=side_channel, z=0)
+			zmean_gon = self.gons.get(t=t, channel__name=main_channel, z=0)
 
 			zbf = zbf_gon.load()
 			zbf = zbf if len(zbf.shape)==2 or (len(zbf.shape)==2 and zbf.shape[2]==2) else np.squeeze(zbf[:,:,0])
