@@ -182,6 +182,7 @@ class Command(BaseCommand):
 			# composite.create_tracking()
 			composite.create_max_gfp(bf_ratio=bf_ratio, sigma=gfp_sigma)
 			# composite.create_bf_gfp(bf_ratio=bf_ratio)
+			composite.create_zunique()
 
 			# copy max gfp to tracking folder
 			if not exists(join(composite.experiment.ij_path, series.name)):
