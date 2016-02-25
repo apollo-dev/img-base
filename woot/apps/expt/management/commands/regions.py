@@ -100,6 +100,10 @@ class Command(BaseCommand):
 				data_file, data_file_created, status = composite.get_or_create_data_file(composite.experiment.track_path, df_name)
 				print('step02 | data file {}... {}'.format(df_name, status))
 
+				if not data_file_created:
+					os.remove(join(experiment.track_path, data_file.file_name))
+					data_file.delete()
+
 			### MARKERS
 			print('removing previous region tracks...')
 			composite.region_markers.all().delete()
