@@ -275,7 +275,7 @@ class Composite(models.Model):
 
 			zunique = gf(zunique, sigma=3)
 
-			zunique_gon, zunique_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=zunique_channel, t=t)
+			zunique_gon, zunique_gon_created = self.gons.get_or_create(experiment=self.experiment, series=self.series, channel=zunique_channel, t=t, z=0)
 			zunique_gon.set_origin(0,0,0,t)
 			zunique_gon.set_extent(self.series.rs, self.series.cs, 1)
 
