@@ -266,8 +266,8 @@ class Composite(models.Model):
 
 		for t in range(self.series.ts):
 			print('creating zunique t{}/{}'.format(t+1, self.series.ts), end='\r' if t<self.series.ts-1 else '\n')
-			zmean = exposure.rescale_intensity(self.gons.get(channel__name='-zmean', t=t).load() * 1.0)
-			zmod = exposure.rescale_intensity(self.gons.get(channel__name='-zmod', t=t).load() * 1.0)
+			zmean = exposure.rescale_intensity(self.gons.get(channel__name='-zmean', t=t, z=0).load() * 1.0)
+			zmod = exposure.rescale_intensity(self.gons.get(channel__name='-zmod', t=t, z=0).load() * 1.0)
 
 			zunique = np.zeros(zmean.shape)
 			for unique in np.unique(zmod):
