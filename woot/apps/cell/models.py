@@ -151,9 +151,9 @@ class Cell(models.Model):
 					mask.vc = 0
 					mask.vz = 0
 				else:
-					# velocities
-					mask.vr = mask.Location_Center_Y - previous_mask.Location_Center_Y
-					mask.vc = mask.Location_Center_X - previous_mask.Location_Center_X
+					# velocitiesd
+					mask.vr = mask.r - previous_mask.r
+					mask.vc = mask.c - previous_mask.c
 					mask.vz = mask.z - previous_mask.z
 
 				mask.save()
@@ -298,6 +298,7 @@ class CellMask(models.Model):
 			self.series.name,
 			self.channel.name,
 			self.cell.pk,
+			self.marker.track_instance.track.track_id,
 			self.r,
 			self.R(),
 			self.c,

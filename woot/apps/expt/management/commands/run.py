@@ -52,8 +52,9 @@ class Command(BaseCommand):
 			# 3. get experiment
 			experiment = Experiment.objects.get(name=experiment_name)
 			series = experiment.series.get(name=series_name)
-			# print(series)
 			# experiment.make_paths(join(settings.DATA_ROOT, experiment.name))
+			# for cell in series.cells.all():
+				# cell.calculate_velocities('UNIQUE00')
 
 			series.export_data('UNIQUE00')
 

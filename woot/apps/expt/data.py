@@ -60,6 +60,7 @@ headers = [
 	'series',
 	'channel',
 	'cell id',
+	'track id',
 	'row (pixels)',
 	'row (um)',
 	'column (pixels)',
