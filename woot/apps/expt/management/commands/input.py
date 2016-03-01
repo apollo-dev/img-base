@@ -164,12 +164,13 @@ class Command(BaseCommand):
 
 			# 5. composite
 			print('step01 | creating composite for experiment {} series {}'.format(experiment_name, series_name))
-			composite = series.compose() if series.composites.filter().count()==0 else series.composites.get()
+			series.composites.get().delete()
+			composite = series.compose()# if series.composites.filter().count()==0 else series.composites.get()
 
 			# 6. make zmod channels
-			composite.create_zmod(R=R, delta_z=dz, sigma=sigma)
-			composite.create_tracking()
-			composite.create_zunique()
+			# composite.create_zmod(R=R, delta_z=dz, sigma=sigma)
+			# composite.create_tracking()
+			# composite.create_zunique()
 
 		else:
 			print('input | Enter an experiment.')

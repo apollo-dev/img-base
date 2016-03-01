@@ -77,6 +77,7 @@ class Command(BaseCommand):
 				if exists(data_file.url):
 					data = data_file.load()
 					for i, marker_prototype in enumerate(data):
+						print(marker_prototype['channel'])
 						track, track_created = composite.tracks.get_or_create(experiment=composite.experiment,
 																																	series=composite.series,
 																																	composite=composite,

@@ -4,3 +4,4 @@ migrations/
 *.sqlite3
 
 *.png
+test/

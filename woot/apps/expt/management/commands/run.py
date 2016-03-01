@@ -52,15 +52,10 @@ class Command(BaseCommand):
 			# 3. get experiment
 			experiment = Experiment.objects.get(name=experiment_name)
 			series = experiment.series.get(name=series_name)
-			composite = series.composites.get()
+			# print(series)
+			# experiment.make_paths(join(settings.DATA_ROOT, experiment.name))
 
-			# 4. export, zmean, primary and zbf into {expt}/run/{series_name}
-			run_path = join(experiment.base_path, 'run', series.name)
-
-			for t in range(series.ts):
-				zbf = exposure.rescale_intensity(composite.gons.get(channel__name='-zbf', t=t).load() * 1.0)
-				zvar = exposure.rescale_intensity(composite.gons.get(channel__name='-zmean', t=t).load() * 1.0)
-				
+			series.export_data('UNIQUE00')
 
 		else:
 			print('input | Enter an experiment.')
