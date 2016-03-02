@@ -309,7 +309,12 @@ class CellMask(models.Model):
 		if self.t == minimum_frame:
 			return 0.0 # velocity is zero for first frame
 		else:
-			previous_marker = self.marker.track.instances.get(t=self.t-1).markers.get()
+			previous_marker = None
+			t_counter = 0
+			while previous_marker is None:
+				t_counter += 1
+				if self.marker.track.instances.filter(t=self.t-t_counter).count()!=0:
+					previous_marker = self.marker.track.instances.get(t=self.t-t_counter).markers.all()[0]
 			return (self.r - previous_marker.r) * self.series.rmop / self.series.tpf
 
 	def vc_marker_um(self):
@@ -320,7 +325,12 @@ class CellMask(models.Model):
 		if self.t == minimum_frame:
 			return 0.0 # velocity is zero for first frame
 		else:
-			previous_marker = self.marker.track.instances.get(t=self.t-1).markers.get()
+			previous_marker = None
+			t_counter = 0
+			while previous_marker is None:
+				t_counter += 1
+				if self.marker.track.instances.filter(t=self.t-t_counter).count()!=0:
+					previous_marker = self.marker.track.instances.get(t=self.t-t_counter).markers.all()[0]
 			return (self.c - previous_marker.c) * self.series.cmop / self.series.tpf
 
 	def vz_um(self):
