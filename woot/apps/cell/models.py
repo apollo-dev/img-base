@@ -265,11 +265,29 @@ class CellMask(models.Model):
 	AreaShape_Zernike_9_9 = models.FloatField(default=0.0)
 
 	# methods
-	def R(self):
-		return self.r*self.series.rmop
+	def r_cm_pixels(self):
+		return self.Location_Center_Y
 
-	def C(self):
-		return self.c*self.series.cmop
+	def r_cm_um(self):
+		return self.Location_Center_Y * self.series.rmop
+
+	def c_cm_pixels(self):
+		return self.Location_Center_X
+
+	def c_cm_um(self):
+		return self.Location_Center_X * self.series.cmop
+
+	def r_marker_pixels(self):
+		return self.r
+
+	def r_marker_um(self):
+		return self.r * self.series.rmop
+
+	def c_marker_pixels(self):
+		return self.c
+
+	def c_marker_um(self):
+		return self.c * self.series.cmop
 
 	def Z(self):
 		return self.z*self.series.zmop
@@ -277,40 +295,117 @@ class CellMask(models.Model):
 	def T(self):
 		return self.t*self.series.tpf
 
-	def V(self):
-		return np.sqrt(self.VR()**2 + self.VC()**2 + self.VZ()**2)
+	def vr_cm_um(self):
+		return self.vr * self.series.rmop / self.series.tpf
 
-	def VR(self):
-		return self.vr*self.series.rmop / self.series.tpf
+	def vc_cm_um(self):
+		return self.vc * self.series.cmop / self.series.tpf
 
-	def VC(self):
-		return self.vc*self.series.cmop / self.series.tpf
+	def vr_marker_um(self):
+		# find minimum frame for this mask
+		minimum_frame =	self.marker.track.instances.aggregate(models.Min('t'))['t__min']
 
-	def VZ(self):
-		return self.vz*self.series.zmop / self.series.tpf
+		# get marker object from previous frame
+		if self.t == minimum_frame:
+			return 0.0 # velocity is zero for first frame
+		else:
+			previous_marker = self.marker.track.instances.get(t=self.t-1).markers.get()
+			return (self.r - previous_marker.r) * self.series.rmop / self.series.tpf
+
+	def vc_marker_um(self):
+		# find minimum frame for this mask
+		minimum_frame =	self.marker.track.instances.aggregate(models.Min('t'))['t__min']
+
+		# get marker object from previous frame
+		if self.t == minimum_frame:
+			return 0.0 # velocity is zero for first frame
+		else:
+			previous_marker = self.marker.track.instances.get(t=self.t-1).markers.get()
+			return (self.c - previous_marker.c) * self.series.cmop / self.series.tpf
+
+	def vz_um(self):
+		return self.vz * self.series.zmop / self.series.tpf
 
 	def A(self):
 		return self.AreaShape_Area*self.series.rmop*self.series.cmop
 
-	def line(self):
+	def line(self, new_centre=(0,0), flip_top=False, flip_z=False):
+		# get positions
+		r_cm_pixels = self.r_cm_pixels()
+		r_cm_um = self.r_cm_um()
+		c_cm_pixels = self.c_cm_pixels()
+		c_cm_um = self.c_cm_um()
+		r_marker_pixels = self.r_marker_pixels()
+		r_marker_um = self.r_marker_um()
+		c_marker_pixels = self.c_marker_pixels()
+		c_marker_um = self.c_marker_um()
+		z_pixels = self.z
+		z_um = self.Z()
+
+		# get velocities
+		vr_cm_um = self.vr_cm_um()
+		vc_cm_um = self.vc_cm_um()
+		vr_marker_um = self.vr_marker_um()
+		vc_marker_um = self.vc_marker_um()
+		vz_um = self.vz_um()
+
+		vr_cm_total_um = np.sqrt(vr_cm_um**2 + vc_cm_um**2 + vz_um**2)
+		vc_marker_total_um = np.sqrt(vr_marker_um**2 + vc_marker_um**2 + vz_um**2)
+
+		# set parameters
 		parameters = (
+			# metadata
 			self.experiment.name,
 			self.series.name,
 			self.channel.name,
 			self.cell.pk,
-			self.r,
-			self.R(),
-			self.c,
-			self.C(),
-			self.z,
-			self.Z(),
+			self.marker.track_instance.t,
+
+			# raw coordinates
+			r_cm_pixels,
+			r_cm_um,
+			c_cm_pixels,
+			c_cm_um,
+			r_marker_pixels,
+			r_marker_um,
+			c_marker_pixels,
+			c_marker_um,
+			z_pixels,
+			z_um,
+
+			# transformed coordinates
+			r_cm_um if not flip_top else self.series.rs * self.series.rmop - r_cm_um,
+			c_cm_um if not flip_top else self.series.cs * self.series.cmop - c_cm_um,
+			r_marker_um if not flip_top else self.series.rs * self.series.rmop - r_marker_um,
+			c_marker_um if not flip_top else self.series.cs * self.series.cmop - c_marker_um,
+			z_um if not flip_z else self.series.zs * self.series.zmop - z_um,
+
+			# frame
 			self.t,
 			self.T(),
-			self.VR(),
-			self.VC(),
-			self.VZ(),
-			self.V(),
+
+			# velocity
+			vr_cm_um,
+			vc_cm_um,
+			vr_marker_um,
+			vc_marker_um,
+			vz_um,
+
+			# velocity transform
+			vr_cm_um if not flip_top else -vr_cm_um,
+			vc_cm_um if not flip_top else -vc_cm_um,
+			vr_marker_um if not flip_top else -vr_marker_um,
+			vc_marker_um if not flip_top else -vc_marker_um,
+			vz_um if not flip_z else -vz_um,
+
+			# total velocities
+			vr_cm_total_um,
+			vc_marker_total_um,
+
+			# region
 			self.region.name if self.region is not None else 'no region',
+
+			# CellProfiler
 			self.AreaShape_Area,
 			self.A(),
 			self.AreaShape_Compactness,

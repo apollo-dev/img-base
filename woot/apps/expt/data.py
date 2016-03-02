@@ -56,23 +56,58 @@ default_paths = {
 
 # headers
 headers = [
+	# metadata
 	'experiment',
 	'series',
 	'channel',
 	'cell id',
-	'row (pixels)',
-	'row (um)',
-	'column (pixels)',
-	'column (um)',
-	'z level (levels)',
-	'z level (um)',
+	'marker id',
+
+	# raw coordinates
+	'CM row (pixels)',
+	'CM row (um)',
+	'CM column (pixels)',
+	'CM column (um)',
+	'marker row (pixels)',
+	'marker row (um)',
+	'marker column (pixels)',
+	'marker column (um)',
+	'mean mask z level (levels)',
+	'mean mask z level (um)',
+
+	# transformed coordinates
+	'CM row transform (um)',
+	'CM column transform (um)',
+	'marker row transform (um)',
+	'marker column transform (um)',
+	'mean mask z level transform (um)',
+
+	# frame
 	'frame',
 	't (min)',
-	'row velocity (um/min)',
-	'column velocity (um/min)',
-	'Z velocity (um/min)',
-	'total velocity (um/min)',
+
+	# velocity
+	'CM row velocity (um/m)',
+	'CM column velocity (um/m)',
+	'marker row velocity (um/m)',
+	'marker column velocity (um/m)',
+	'mean mask z level velocity (um/m)',
+
+	# velocity transform
+	'CM row velocity transform (um/m)',
+	'CM column velocity transform (um/m)',
+	'marker row velocity transform (um/m)',
+	'marker column velocity transform (um/m)',
+	'mean mask z level velocity transform (um/m)',
+
+	# total velocities
+	'CM total velocity (um/m)',
+	'marker total velocity (um/m)',
+
+	# region
 	'region name',
+
+	# CellProfiler
 	'mask area (pixels)',
 	'mask area (um^2)',
 	'AreaShape_Compactness',
