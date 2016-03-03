@@ -385,9 +385,9 @@ class CellMask(models.Model):
 
 			# transformed coordinates
 			r_cm_um if not flip_top else self.series.rs * self.series.rmop - r_cm_um,
-			c_cm_um if not flip_top else self.series.cs * self.series.cmop - c_cm_um,
+			c_cm_um,
 			r_marker_um if not flip_top else self.series.rs * self.series.rmop - r_marker_um,
-			c_marker_um if not flip_top else self.series.cs * self.series.cmop - c_marker_um,
+			c_marker_um,
 			z_um if not flip_z else self.series.zs * self.series.zmop - z_um,
 
 			# frame
@@ -403,9 +403,9 @@ class CellMask(models.Model):
 
 			# velocity transform
 			vr_cm_um if not flip_top else -vr_cm_um,
-			vc_cm_um if not flip_top else -vc_cm_um,
+			vc_cm_um,
 			vr_marker_um if not flip_top else -vr_marker_um,
-			vc_marker_um if not flip_top else -vc_marker_um,
+			vc_marker_um,
 			vz_um if not flip_z else -vz_um,
 
 			# total velocities
