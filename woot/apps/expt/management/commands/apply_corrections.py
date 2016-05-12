@@ -6,7 +6,7 @@ from django.conf import settings
 
 # local
 from apps.expt.models import Experiment
-from apps.expt.data import corrections, zlevels
+from apps.expt.data import corrections
 
 # util
 import numpy as np
@@ -49,9 +49,6 @@ class Command(BaseCommand):
 		# 2. for each cell mask, modify certain values
 		for i, cell_mask in enumerate(series.cell_masks.all()):
 			t = cell_mask.t
-
-			correction_z = zlevels[str(series.name)]['out'][t] - zlevels[str(series.name)]['in'][t]
-			cell_mask.z += correction_z
 
 			if t>0:
 				previous_value_r, previous_value_c = tuple(experiment_corrections[t-1])
