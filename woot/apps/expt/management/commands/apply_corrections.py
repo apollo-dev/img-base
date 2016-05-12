@@ -58,23 +58,6 @@ class Command(BaseCommand):
 				value_r, value_c = tuple(experiment_corrections[t])
 				correction_r, correction_c = value_r - previous_value_r, value_c - previous_value_c
 
-				# print(i+1, series.cell_masks.count(), correction_r, correction_c)
-				#
-				# if cell_mask.cell.pk == 324:
-				# 	P_original = cell_mask.Location_Center_Y * cell_mask.series.rmop
-				# 	P_corrected = (cell_mask.Location_Center_Y - correction_r) * cell_mask.series.rmop
-				#
-				# 	Q_original = cell_mask.Location_Center_X * cell_mask.series.cmop
-				# 	Q_corrected = (cell_mask.Location_Center_X - correction_c) * cell_mask.series.cmop
-				#
-				# 	R_original = cell_mask.r * cell_mask.series.rmop
-				# 	R_corrected = (cell_mask.r - correction_r) * cell_mask.series.rmop
-				#
-				# 	S_original = cell_mask.c * cell_mask.series.cmop
-				# 	S_corrected = (cell_mask.c - correction_c) * cell_mask.series.cmop
-				#
-				# 	print(t, correction_r, correction_c, 'P', P_original, P_corrected, 'Q', Q_original, Q_corrected, 'R', R_original, R_corrected, 'S', S_original, S_corrected)
-
 				cell_mask.r -= correction_r
 				cell_mask.c -= correction_c
 				cell_mask.Location_Center_Y -= correction_r
