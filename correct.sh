@@ -1,10 +1,26 @@
-python manage.py new_base_path --expt=20_11_15;
+# python manage.py new_base_path --expt=20_11_15;
 # python manage.py apply_corrections --expt=20_11_15 --series=7;
 # python manage.py export --expt=20_11_15 --series=7;
 # python manage.py apply_corrections --expt=20_11_15 --series=8;
 # python manage.py export --expt=20_11_15 --series=8;
-python manage.py apply_corrections --expt=20_11_15 --series=9;
-python manage.py export --expt=20_11_15 --series=9;
+
+
+python manage.py apply_corrections --expt=08_04_16_HUVEC_MB4175 --series=12;
+python manage.py export --expt=08_04_16_HUVEC_MB4175 --series=12;
+python manage.py apply_corrections --expt=08_04_16_HUVEC_MB4175 --series=13;
+python manage.py export --expt=08_04_16_HUVEC_MB4175 --series=13;
+
+python manage.py apply_corrections --expt=12_02_16_HUVEC_MB4175 --series=6;
+python manage.py export --expt=12_02_16_HUVEC_MB4175 --series=6;
+python manage.py apply_corrections --expt=12_02_16_HUVEC_MB4175 --series=7;
+python manage.py export --expt=12_02_16_HUVEC_MB4175 --series=7;
+
+python manage.py apply_corrections --expt=21_02_16_HUVEC_MB4175 --series=16;
+python manage.py export --expt=21_02_16_HUVEC_MB4175 --series=16;
+python manage.py apply_corrections --expt=21_02_16_HUVEC_MB4175 --series=17;
+python manage.py export --expt=21_02_16_HUVEC_MB4175 --series=17;
+
+
 # python manage.py apply_corrections --expt=20_11_15 --series=10;
 # python manage.py export --expt=20_11_15 --series=10;
 #
