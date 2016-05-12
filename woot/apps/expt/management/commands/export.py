@@ -65,6 +65,9 @@ class Command(BaseCommand):
 			series = experiment.series.get(name=series_name)
 
 			# export
+			for cell in series.cells.all():
+				cell.calculate_velocities('UNIQUE00')
+				
 			print('exporting data...')
 			series.export_data('UNIQUE00', region_list=[], new_centre=(0,0), flip_top=flip_top, flip_z=flip_z)
 
