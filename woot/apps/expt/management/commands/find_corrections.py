@@ -21,11 +21,12 @@ spacer = ' ' *	20
 class Command(BaseCommand):
 
 	def handle(self, *args, **options):
-		file1 = join(settings.SITE_ROOT, 'correct', '08_04_16.xls')
-		file2 = join(settings.SITE_ROOT, 'correct', '12_02_16.xls')
-		file3 = join(settings.SITE_ROOT, 'correct', '21_02_16.xls')
+		file1 = join(settings.SITE_ROOT, 'correct', '03_03_16.xls')
+		file2 = join(settings.SITE_ROOT, 'correct', '11_03_16.xls')
+		file3 = join(settings.SITE_ROOT, 'correct', '12_02_16.xls')
+		file4 = join(settings.SITE_ROOT, 'correct', '18_03_16.xls')
 
-		for f in [file1, file2, file3]:
+		for f in [file1, file2, file3, file4]:
 			track = []
 
 			with open(f, 'rb') as of:
