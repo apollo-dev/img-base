@@ -603,6 +603,9 @@ class Channel(models.Model):
 																								 marker=marker,
 																								 gray_value_id=gray_value_id)
 
+				else:
+					print('gray id is 0')
+
 					cell_mask_data = cell_mask_data[0]
 
 					# get z
