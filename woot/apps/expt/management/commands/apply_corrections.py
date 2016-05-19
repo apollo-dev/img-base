@@ -51,9 +51,10 @@ class Command(BaseCommand):
 			t = cell_mask.t
 
 			if t>0:
-				previous_value_r, previous_value_c = tuple(experiment_corrections[t-1])
-				value_r, value_c = tuple(experiment_corrections[t])
-				correction_r, correction_c = value_r - previous_value_r, value_c - previous_value_c
+				# previous_value_r, previous_value_c = tuple(experiment_corrections[t-1])
+				# value_r, value_c = tuple(experiment_corrections[t])
+				# correction_r, correction_c = value_r - previous_value_r, value_c - previous_value_c
+				correction_r, correction_c = tuple(experiment_corrections[t])
 
 				cell_mask.r -= correction_r
 				cell_mask.c -= correction_c
