@@ -577,10 +577,10 @@ class Channel(models.Model):
 																																						t=marker.track_instance.t)
 
 				# 3. create cell mask
-				gray_value_id = mask[mask.shape[0]-1 if marker.r >= mask.shape[0] else marker.c, mask.shape[1]-1 if marker.c >= mask.shape[1] else marker.c]
+				gray_value_id = mask[mask.shape[0]-1 if marker.r >= mask.shape[0] else marker.r, mask.shape[1]-1 if marker.c >= mask.shape[1] else marker.c]
 				region_instance = None
 				if region_mask_channel is not None:
-					region_gray_value_id = region_mask[mask.shape[0]-1 if marker.r >= mask.shape[0] else marker.c, mask.shape[1]-1 if marker.c >= mask.shape[1] else marker.c]
+					region_gray_value_id = region_mask[mask.shape[0]-1 if marker.r >= mask.shape[0] else marker.r, mask.shape[1]-1 if marker.c >= mask.shape[1] else marker.c]
 					region_instance = self.composite.series.region_instances.filter(region_track_instance__t=t, mode_gray_value_id=region_gray_value_id)
 					if region_instance:
 						region_instance = region_instance[0]
@@ -602,9 +602,6 @@ class Channel(models.Model):
 																								 mask=mask_mask,
 																								 marker=marker,
 																								 gray_value_id=gray_value_id)
-
-				else:
-					print('gray id is 0')
 
 					cell_mask_data = cell_mask_data[0]
 
